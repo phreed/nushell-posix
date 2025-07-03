@@ -1,0 +1,69 @@
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Dependencies
+**/node_modules/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.test
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Coverage reports
+tarpaulin-report.html
+*.profraw
+*.profdata
+
+# Rust specific
+**/*.rs.bk
+*.pdb
+
+# Pixi
+.pixi/
+pixi.lock
+
+# Testing
+test-results/
+coverage/
+
+# Documentation
+book/
+target/doc/
+
+# Local configuration
+local.toml

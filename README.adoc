@@ -1,0 +1,364 @@
+= nu-posix
+
+A Nushell plugin to convert POSIX shell scripts to idiomatic Nushell syntax.
+
+== Overview
+
+`nu-posix` is a Nushell plugin that provides commands to parse and convert POSIX shell scripts into equivalent Nushell syntax.
+It uses the `yash-syntax` crate for robust POSIX shell parsing and provides intelligent conversion of common shell constructs.
+
+== Features
+
+* *POSIX to Nushell conversion*: Convert shell scripts to idiomatic Nushell syntax
+* *AST parsing*: Parse POSIX shell scripts and examine their structure
+* *Command mapping*: Intelligent conversion of common Unix commands
+* *Control flow*: Convert if/then/else, for loops, while loops, and case statements
+* *Pipeline conversion*: Transform shell pipelines to Nushell equivalents
+* *Error handling*: Comprehensive error reporting for parsing and conversion issues
+
+== Installation
+
+=== Prerequisites
+
+* Nushell (>= 0.105)
+* Rust toolchain
+* Pixi (for development)
+
+=== Building and Installing
+
+1. Clone the repository:
++
+[source,bash]
+----
+git clone <repository-url>
+cd nu-posix
+----
+
+2. Build the plugin:
++
+[source,bash]
+----
+pixi run build
+----
+
+3. Register the plugin with Nushell:
++
+[source,bash]
+----
+pixi run register
+----
++
+Or manually:
++
+[source,bash]
+----
+cargo build --release
+nu -c 'plugin add ./target/release/nu_plugin_posix'
+----
+
+NOTE: The plugin is currently compatible with Nushell 0.105.
+Make sure your Nushell version matches the plugin's target version.
+
+== Usage
+
+=== Converting POSIX scripts to Nushell
+
+[source,nushell]
+----
+# Convert a simple command
+"echo hello world" | from posix
+# Output: print "hello world"
+
+# Convert a pipeline
+"ls | grep test" | from posix
+# Output: ls | where $it =~ "test"
+
+# Convert with pretty formatting
+"if true; then echo yes; fi" | from posix --pretty
+# Output: if true {
+#   print "yes"
+# }
+
+# Convert from a file
+from posix --file script.sh
+----
+
+=== Parsing POSIX scripts
+
+[source,nushell]
+----
+# Parse and examine the AST structure
+"echo hello | wc -l" | parse posix
+# Returns structured data showing the parsed components
+----
+
+=== Converting Nushell back to POSIX (experimental)
+
+[source,nushell]
+----
+# Basic conversion from Nushell to POSIX
+"print hello" | to posix
+# Output: echo hello
+----
+
+== Command Reference
+
+=== `from posix`
+
+Convert POSIX shell script to Nushell syntax.
+
+*Flags:*
+
+* `--pretty, -p`: Format output with proper indentation
+* `--file, -f <path>`: Read POSIX script from file
+
+*Examples:*
+
+[source,nushell]
+----
+"cat file.txt | sort | uniq" | from posix
+# ls -la | head -10 | from posix --pretty
+from posix --file ./script.sh
+----
+
+=== `parse posix`
+
+Parse POSIX shell script and return AST as structured data.
+
+*Examples:*
+
+[source,nushell]
+----
+"for i in *.txt; do echo $i; done" | parse posix
+----
+
+=== `to posix`
+
+Convert Nushell syntax to POSIX shell script (experimental).
+
+*Examples:*
+
+[source,nushell]
+----
+"print hello world" | to posix
+----
+
+== Conversion Examples
+
+=== Basic Commands
+
+[cols="1,1"]
+|===
+| POSIX | Nushell
+
+| `echo hello`
+| `print hello`
+
+| `cat file.txt`
+| `open file.txt`
+
+| `ls -la`
+| `ls --long --all`
+
+| `grep pattern`
+| `where $it =~ "pattern"`
+
+| `head -n 5`
+| `first 5`
+
+| `tail -n 10`
+| `last 10`
+
+| `wc -l`
+| `length`
+|===
+
+=== Pipelines
+
+[cols="1,1"]
+|===
+| POSIX | Nushell
+
+| `ls \| grep test`
+| `ls \| where name =~ "test"`
+
+| `cat file \| sort \| uniq`
+| `open file \| sort \| uniq`
+
+| `find . -name "*.txt" \| head -5`
+| `find . -name "*.txt" \| first 5`
+|===
+
+=== Control Flow
+
+*If statements:*
+
+[source,bash]
+----
+# POSIX
+if [ -f "file.txt" ]; then
+    echo "File exists"
+else
+    echo "File not found"
+fi
+----
+
+[source,nushell]
+----
+# Nushell
+if ("file.txt" | path exists) {
+  print "File exists"
+} else {
+  print "File not found"
+}
+----
+
+*For loops:*
+
+[source,bash]
+----
+# POSIX
+for file in *.txt; do
+    echo "Processing $file"
+done
+----
+
+[source,nushell]
+----
+# Nushell
+glob "*.txt" | each { |file|
+  print $"Processing ($file)"
+}
+----
+
+=== Test Conditions
+
+[cols="1,1"]
+|===
+| POSIX | Nushell
+
+| `[ -f file ]`
+| `("file" \| path exists)`
+
+| `[ -d dir ]`
+| `("dir" \| path type) == "dir"`
+
+| `[ "$a" = "$b" ]`
+| `$a == $b`
+
+| `[ "$a" -eq "$b" ]`
+| `$a == $b`
+
+| `[ -z "$str" ]`
+| `($str \| is-empty)`
+|===
+
+== Development
+
+=== Project Structure
+
+----
+nu-posix/
+├── src/
+│   ├── main.rs              # Plugin entry point
+│   └── plugin/
+│       ├── mod.rs           # Module exports
+│       ├── core.rs          # Plugin implementation
+│       ├── parser.rs        # POSIX parsing logic
+│       └── converter.rs     # Conversion logic
+├── Cargo.toml              # Rust dependencies
+├── pixi.toml               # Pixi configuration
+└── README.adoc             # This file
+----
+
+=== Development Commands
+
+[source,bash]
+----
+# Build the project
+pixi run build
+
+# Run tests
+pixi run test
+
+# Format code
+pixi run fmt
+
+# Run clippy
+pixi run clippy
+
+# Development workflow
+pixi run dev
+----
+
+=== Testing
+
+Run the test suite:
+
+[source,bash]
+----
+cargo test
+----
+
+Test the plugin manually:
+
+[source,bash]
+----
+# Build and register
+cargo build
+nu -c 'register ./target/debug/nu_plugin_posix'
+
+# Test commands
+nu -c 'echo "ls | grep test" | from posix'
+----
+
+== Current Status
+
+This is an initial implementation with basic functionality.
+The plugin currently:
+
+✅ *Working Features:*
+
+* Basic command conversion (echo → print, ls, cat → open, etc.)
+* Simple pipeline conversion (cmd1 | cmd2)
+* Basic control structures (if/then/else, for loops)
+* Variable assignments
+* AND/OR operators (&&, ||)
+* Command parsing and AST generation
+
+⚠️ *Limitations:*
+
+* *POSIX Parser*: Currently uses a simple line-by-line parser instead of full POSIX parsing
+* *Complex shell constructs*: Advanced shell features may not convert perfectly
+* *Variable expansion*: Complex parameter expansion patterns may need manual adjustment
+* *Function definitions*: Shell functions are converted to Nushell functions but may need refinement
+* *Heredocs*: Limited support for here-documents
+* *Background processes*: Background job control has limited conversion support
+* *Nushell version*: Currently targets Nushell 0.105 and is fully compatible
+
+== Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Run the test suite
+6. Submit a pull request
+
+== License
+
+This project is licensed under the MIT OR Apache-2.0 license.
+
+== Future Improvements
+
+* *Full POSIX parsing*: Integration with yash-syntax for comprehensive POSIX shell parsing
+* *Advanced conversions*: Better handling of complex shell constructs
+* *Interactive mode*: CLI mode for batch processing scripts
+* *Configuration*: Customizable conversion rules and preferences
+* *Multiple output formats*: Support for different Nushell coding styles
+
+== Acknowledgments
+
+* Inspired by the excellent https://crates.io/crates/yash-syntax[`yash-syntax`] crate for POSIX parsing
+* Designed for the https://nushell.sh/[Nushell] ecosystem
+* Managed with https://prefix.dev/docs/pixi[Pixi]

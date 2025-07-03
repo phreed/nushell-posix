@@ -1,0 +1,27 @@
+[project]
+name = "nu-posix"
+version = "0.1.0"
+description = "A Rust tool to convert POSIX shell scripts to idiomatic Nushell syntax"
+authors = ["Your Name <your.email@example.com>"]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[dependencies]
+rust = ">=1.70"
+
+[tasks]
+build = "cargo build"
+test = "cargo test"
+run = "cargo run"
+check = "cargo check"
+fmt = "cargo fmt"
+clippy = "cargo clippy"
+install = "cargo install --path ."
+register = "nu -c 'register ./target/debug/nu_plugin_posix'"
+dev = "cargo build && nu -c 'register ./target/debug/nu_plugin_posix; help from-posix'"
+
+[feature.dev.dependencies]
+rust-analyzer = "*"
+
+[environments]
+dev = ["dev"]

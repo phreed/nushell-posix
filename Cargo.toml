@@ -1,0 +1,32 @@
+[package]
+name = "nu-posix"
+version = "0.1.0"
+edition = "2021"
+description = "A Nushell plugin to convert POSIX shell scripts to idiomatic Nushell syntax"
+authors = ["Your Name <your.email@example.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yourusername/nu-posix"
+keywords = ["shell", "posix", "nushell", "plugin", "converter"]
+categories = ["command-line-utilities", "parsing"]
+
+[dependencies]
+nu-plugin = "0.105"
+nu-protocol = "0.105"
+# yash-syntax = "0.15"  # Temporarily disabled - using simple parser for now
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+
+[dev-dependencies]
+pretty_assertions = "1.4"
+tempfile = "3.8"
+
+[[bin]]
+name = "nu_plugin_posix"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"

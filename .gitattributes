@@ -1,0 +1,61 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.rs text diff=rust
+*.toml text
+*.md text
+*.adoc text
+*.txt text
+*.json text
+*.yaml text
+*.yml text
+
+# Scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Documentation
+*.html text diff=html
+*.css text
+*.js text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+*.rar binary
+
+# Rust specific binaries
+*.rlib binary
+*.so binary
+*.dll binary
+*.dylib binary
+*.exe binary
+
+# Archives
+*.tar.gz binary
+*.tar.bz2 binary
+*.tar.xz binary
+
+# Font files
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+
+# Lockfiles - generated content
+Cargo.lock linguist-generated=true
