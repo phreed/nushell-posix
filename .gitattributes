@@ -7,6 +7,7 @@
 *.md text
 *.adoc text
 *.txt text
+LICENSE text
 *.json text
 *.yaml text
 *.yml text
