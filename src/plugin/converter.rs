@@ -94,8 +94,6 @@ impl PosixToNuConverter {
 
         // Fallback to legacy conversions for commands not in SUS or builtin
         match name {
-            "sort" => Ok("sort".to_string()),
-            "uniq" => Ok("uniq".to_string()),
             "awk" => {
                 // Basic awk conversion - this is very limited
                 if args.is_empty() {
@@ -116,55 +114,10 @@ impl PosixToNuConverter {
                     Ok(format!("awk {}", self.format_args(args)))
                 }
             }
-            "rmdir" => Ok(format!("rmdir {}", self.format_args(args))),
-            "pwd" => Ok("pwd".to_string()),
-            "chmod" => Ok(format!("chmod {}", self.format_args(args))),
-            "chown" => Ok(format!("chown {}", self.format_args(args))),
             "which" => Ok(format!("which {}", self.format_args(args))),
             "whoami" => Ok("whoami".to_string()),
             "ps" => Ok("ps".to_string()),
-            "kill" => Ok(format!("kill {}", self.format_args(args))),
-            "jobs" => Ok("jobs".to_string()),
-            "exit" => {
-                if args.is_empty() {
-                    Ok("exit".to_string())
-                } else {
-                    Ok(format!("exit {}", args[0]))
-                }
-            }
-            "true" => Ok("true".to_string()),
-            "false" => Ok("false".to_string()),
-            "seq" => {
-                if args.len() == 1 {
-                    Ok(format!("1..{}", args[0]))
-                } else if args.len() == 2 {
-                    Ok(format!("{}..{}", args[0], args[1]))
-                } else if args.len() == 3 {
-                    Ok(format!("{}..{} | step {}", args[0], args[2], args[1]))
-                } else {
-                    Ok(format!("seq {}", self.format_args(args)))
-                }
-            }
-            "read" => {
-                if args.is_empty() {
-                    Ok("input".to_string())
-                } else if args.len() == 1 && args[0] == "-s" {
-                    Ok("input -s".to_string())
-                } else {
-                    Ok(format!("read {}", self.format_args(args)))
-                }
-            }
-            "stat" => Ok(format!("stat {}", self.format_args(args))),
-            "basename" => Ok(format!("path basename {}", self.format_args(args))),
-            "dirname" => Ok(format!("path dirname {}", self.format_args(args))),
-            "realpath" => Ok(format!("path expand {}", self.format_args(args))),
-            "tee" => {
-                if args.len() == 1 {
-                    Ok(format!("tee {{ save {} }}", self.quote_arg(&args[0])))
-                } else {
-                    Ok(format!("tee {}", self.format_args(args)))
-                }
-            }
+
             _ => {
                 // Unknown command, pass through with args
                 if args.is_empty() {

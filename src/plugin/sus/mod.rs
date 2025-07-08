@@ -42,10 +42,14 @@ impl BaseConverter {
 }
 
 // Command converter modules
+pub mod basename;
 pub mod cat;
+pub mod chmod;
+pub mod chown;
 pub mod cp;
 pub mod cut;
 pub mod date;
+pub mod dirname;
 pub mod echo;
 pub mod find;
 pub mod grep;
@@ -53,16 +57,27 @@ pub mod head;
 pub mod ls;
 pub mod mkdir;
 pub mod mv;
+pub mod realpath;
 pub mod rm;
+pub mod rmdir;
 pub mod sed;
+pub mod seq;
+pub mod sort;
+pub mod stat;
 pub mod tail;
+pub mod tee;
+pub mod uniq;
 pub mod wc;
 
 // Re-export all converters
+pub use basename::BasenameConverter;
 pub use cat::CatConverter;
+pub use chmod::ChmodConverter;
+pub use chown::ChownConverter;
 pub use cp::CpConverter;
 pub use cut::CutConverter;
 pub use date::DateConverter;
+pub use dirname::DirnameConverter;
 pub use echo::EchoConverter;
 pub use find::FindConverter;
 pub use grep::GrepConverter;
@@ -70,9 +85,16 @@ pub use head::HeadConverter;
 pub use ls::LsConverter;
 pub use mkdir::MkdirConverter;
 pub use mv::MvConverter;
+pub use realpath::RealpathConverter;
 pub use rm::RmConverter;
+pub use rmdir::RmdirConverter;
 pub use sed::SedConverter;
+pub use seq::SeqConverter;
+pub use sort::SortConverter;
+pub use stat::StatConverter;
 pub use tail::TailConverter;
+pub use tee::TeeConverter;
+pub use uniq::UniqConverter;
 pub use wc::WcConverter;
 
 /// Registry of all command converters
@@ -88,10 +110,14 @@ impl CommandRegistry {
         };
 
         // Register all standard converters
+        registry.register(Box::new(BasenameConverter));
         registry.register(Box::new(CatConverter));
+        registry.register(Box::new(ChmodConverter));
+        registry.register(Box::new(ChownConverter));
         registry.register(Box::new(CpConverter));
         registry.register(Box::new(CutConverter));
         registry.register(Box::new(DateConverter));
+        registry.register(Box::new(DirnameConverter));
         registry.register(Box::new(EchoConverter));
         registry.register(Box::new(FindConverter));
         registry.register(Box::new(GrepConverter));
@@ -99,9 +125,16 @@ impl CommandRegistry {
         registry.register(Box::new(LsConverter));
         registry.register(Box::new(MkdirConverter));
         registry.register(Box::new(MvConverter));
+        registry.register(Box::new(RealpathConverter));
         registry.register(Box::new(RmConverter));
+        registry.register(Box::new(RmdirConverter));
         registry.register(Box::new(SedConverter));
+        registry.register(Box::new(SeqConverter));
+        registry.register(Box::new(SortConverter));
+        registry.register(Box::new(StatConverter));
         registry.register(Box::new(TailConverter));
+        registry.register(Box::new(TeeConverter));
+        registry.register(Box::new(UniqConverter));
         registry.register(Box::new(WcConverter));
 
         registry
@@ -162,6 +195,14 @@ mod tests {
         assert!(registry.find_converter("echo").is_some());
         assert!(registry.find_converter("ls").is_some());
         assert!(registry.find_converter("grep").is_some());
+
+        // Test that newly migrated commands are registered
+        assert!(registry.find_converter("sort").is_some());
+        assert!(registry.find_converter("uniq").is_some());
+        assert!(registry.find_converter("rmdir").is_some());
+        assert!(registry.find_converter("chmod").is_some());
+        assert!(registry.find_converter("chown").is_some());
+
         assert!(registry.find_converter("nonexistent").is_none());
     }
 
