@@ -1,0 +1,50 @@
+= nu-posix Documentation - Table of Contents
+:toc: left
+:toclevels: 3
+:sectnums:
+
+== Available Chapters
+
+. <<chapter-1,Problem Description>>
+. <<chapter-2,Project Status>>
+. <<chapter-3,Architecture Overview>>
+. <<chapter-4,Parser Integration>>
+. <<chapter-5,Converter Architecture>>
+. <<chapter-6,Command Registry System>>
+. <<chapter-7,Builtin Converters>>
+. <<chapter-8,SUS Converters>>
+. <<chapter-9,AWK Converter>>
+. <<chapter-10,Converter Verification>>
+. <<chapter-11,Testing Framework>>
+. <<chapter-12,Development Guide>>
+. <<chapter-13,API Reference>>
+. <<chapter-14,Command Reference>>
+. <<chapter-15,Troubleshooting>>
+
+== Quick Reference
+
+=== Core Commands
+* `from posix` - Convert POSIX shell scripts to Nushell
+* `to posix` - Convert Nushell scripts to POSIX shell (basic)
+* `parse posix` - Parse POSIX scripts and return AST
+
+=== Key Features
+* Dual parser architecture (yash-syntax + heuristic fallback)
+* 37+ command converters (9 builtins + 28 SUS utilities)
+* External command handling for complex tools like AWK
+* Comprehensive testing framework
+* Production-ready with extensive validation
+
+=== Getting Started
+1. Build: `cargo build --release`
+2. Register: `plugin add target/release/nu-posix`
+3. Use: `plugin use nu-posix`
+4. Convert: `"echo hello" | from posix`
+
+=== Common Use Cases
+* DevOps script migration
+* System administration automation
+* Build system conversion
+* Legacy script modernization
+
+For detailed information, see the complete documentation book.

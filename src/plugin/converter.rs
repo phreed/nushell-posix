@@ -114,9 +114,6 @@ impl PosixToNuConverter {
                     Ok(format!("awk {}", self.format_args(args)))
                 }
             }
-            "which" => Ok(format!("which {}", self.format_args(args))),
-            "whoami" => Ok("whoami".to_string()),
-            "ps" => Ok("ps".to_string()),
 
             _ => {
                 // Unknown command, pass through with args

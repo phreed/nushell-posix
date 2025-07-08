@@ -143,6 +143,23 @@ cmd = "cargo clean && rm -rf target"
 cmd = "cargo doc --open"
 depends-on = ["full-clean"]
 
+[tasks.build-book]
+cmd = "nu docs/build_book.nu"
+description = "Build the complete documentation book from AsciiDoc chapters"
+
+[tasks.build-book-html]
+cmd = "nu docs/build_book.nu && asciidoctor docs/nu-posix-book.adoc -o docs/nu-posix-book.html -a doctype=book"
+description = "Build the documentation book and generate HTML output"
+
+[tasks.view-book]
+cmd = "xdg-open docs/nu-posix-book.html || open docs/nu-posix-book.html"
+description = "Open the generated HTML book in the default browser"
+depends-on = ["build-book-html"]
+
+[tasks.docs-all]
+depends-on = ["build-book", "docs"]
+description = "Build both the documentation book and API docs"
+
 [tasks.bench]
 cmd = "cargo bench"
 depends-on = ["full-clean"]

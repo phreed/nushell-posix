@@ -42,6 +42,7 @@ impl BaseConverter {
 }
 
 // Command converter modules
+pub mod awk;
 pub mod basename;
 pub mod cat;
 pub mod chmod;
@@ -57,6 +58,7 @@ pub mod head;
 pub mod ls;
 pub mod mkdir;
 pub mod mv;
+pub mod ps;
 pub mod realpath;
 pub mod rm;
 pub mod rmdir;
@@ -68,8 +70,11 @@ pub mod tail;
 pub mod tee;
 pub mod uniq;
 pub mod wc;
+pub mod which;
+pub mod whoami;
 
 // Re-export all converters
+pub use awk::AwkConverter;
 pub use basename::BasenameConverter;
 pub use cat::CatConverter;
 pub use chmod::ChmodConverter;
@@ -85,6 +90,7 @@ pub use head::HeadConverter;
 pub use ls::LsConverter;
 pub use mkdir::MkdirConverter;
 pub use mv::MvConverter;
+pub use ps::PsConverter;
 pub use realpath::RealpathConverter;
 pub use rm::RmConverter;
 pub use rmdir::RmdirConverter;
@@ -96,6 +102,8 @@ pub use tail::TailConverter;
 pub use tee::TeeConverter;
 pub use uniq::UniqConverter;
 pub use wc::WcConverter;
+pub use which::WhichConverter;
+pub use whoami::WhoamiConverter;
 
 /// Registry of all command converters
 pub struct CommandRegistry {
@@ -110,6 +118,7 @@ impl CommandRegistry {
         };
 
         // Register all standard converters
+        registry.register(Box::new(AwkConverter));
         registry.register(Box::new(BasenameConverter));
         registry.register(Box::new(CatConverter));
         registry.register(Box::new(ChmodConverter));
@@ -136,6 +145,9 @@ impl CommandRegistry {
         registry.register(Box::new(TeeConverter));
         registry.register(Box::new(UniqConverter));
         registry.register(Box::new(WcConverter));
+        registry.register(Box::new(WhichConverter));
+        registry.register(Box::new(WhoamiConverter));
+        registry.register(Box::new(PsConverter));
 
         registry
     }
@@ -192,6 +204,7 @@ mod tests {
         let registry = CommandRegistry::new();
 
         // Test that basic commands are registered
+        assert!(registry.find_converter("awk").is_some());
         assert!(registry.find_converter("echo").is_some());
         assert!(registry.find_converter("ls").is_some());
         assert!(registry.find_converter("grep").is_some());
@@ -202,6 +215,9 @@ mod tests {
         assert!(registry.find_converter("rmdir").is_some());
         assert!(registry.find_converter("chmod").is_some());
         assert!(registry.find_converter("chown").is_some());
+        assert!(registry.find_converter("which").is_some());
+        assert!(registry.find_converter("whoami").is_some());
+        assert!(registry.find_converter("ps").is_some());
 
         assert!(registry.find_converter("nonexistent").is_none());
     }
