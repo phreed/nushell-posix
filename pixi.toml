@@ -170,6 +170,72 @@ depends-on = ["build"]
 cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; print \"Test commands:\"; print \"  echo \\\"ls | grep test\\\" | from posix\"; print \"  echo \\\"if true; then echo yes; fi\\\" | from posix --pretty\"; print \"  from posix --file ./examples/sample.sh\"'"
 depends-on = ["build"]
 
+# AST Analysis Tasks
+[tasks.show-ast]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; let script = \"$SCRIPT\"; print \"=== POSIX Script ===\"; print $script; print \"\\n=== AST Structure ===\"; echo $script | parse posix | to json --indent 2'"
+depends-on = ["build"]
+env = { SCRIPT = "echo hello world" }
+
+[tasks.show-ast-file]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; print \"=== Sample Script AST ===\"; open ./examples/sample.sh | str trim | parse posix | to json --indent 2'"
+depends-on = ["build"]
+
+[tasks.show-ast-table]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"$SCRIPT\" | parse posix | get commands | table --expand'"
+depends-on = ["build"]
+env = { SCRIPT = "ls -la | grep test" }
+
+[tasks.ast-compare]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; let script = \"$SCRIPT\"; print \"=== Original POSIX ===\"; print $script; print \"\\n=== Parsed AST ===\"; echo $script | parse posix | to json --indent 2; print \"\\n=== Converted Nu ===\"; echo $script | from posix --pretty'"
+depends-on = ["build"]
+env = { SCRIPT = "if [ -f test.txt ]; then cat test.txt | grep hello; fi" }
+
+[tasks.ast-analyze]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; let script = \"$SCRIPT\"; let ast = (echo $script | parse posix); print \"=== POSIX to Nu Analysis ===\"; print $\"Input: ($script)\"; print $\"Commands: (($ast | get commands | length) commands)\"; print \"\\n=== Command Types ===\"; $ast | get commands | group-by type | transpose key count | table; print \"\\n=== Full AST ===\"; $ast | to json --indent 2; print \"\\n=== Converted Nu ===\"; echo $script | from posix --pretty'"
+depends-on = ["build"]
+env = { SCRIPT = "ls | grep test | head -5" }
+
+[tasks.ast-explorer]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; print \"🔍 AST Explorer - Available commands:\"; print \"\\n📊 Basic Analysis:\"; print \"  pixi run show-ast SCRIPT=\\\"your_script_here\\\"\"; print \"  pixi run show-ast-file\"; print \"  pixi run show-ast-table SCRIPT=\\\"your_script_here\\\"\"; print \"  pixi run ast-compare SCRIPT=\\\"your_script_here\\\"\"; print \"  pixi run ast-analyze SCRIPT=\\\"your_script_here\\\"\"; print \"\\n🎯 Advanced Analysis:\"; print \"  pixi run ast-demo SCRIPT=\\\"your_script_here\\\" FORMAT=json\"; print \"  pixi run ast-demo SCRIPT=\\\"your_script_here\\\" FORMAT=table\"; print \"  pixi run ast-demo SCRIPT=\\\"your_script_here\\\" FORMAT=summary\"; print \"  pixi run ast-demo-file\"; print \"  pixi run ast-demo-examples\"; print \"  pixi run ast-full-analysis SCRIPT=\\\"your_script_here\\\"\"; print \"\\n🔧 Specialized:\"; print \"  pixi run ast-pipeline\"; print \"  pixi run ast-conditional\"; print \"  pixi run ast-loop\"; print \"\\n📝 Examples:\"; print \"  pixi run ast-demo SCRIPT=\\\"ls -la | grep test\\\" FORMAT=summary\"; print \"  pixi run ast-full-analysis SCRIPT=\\\"if [ -f test ]; then echo yes; fi\\\"\"; print \"  pixi run ast-demo-file\"; print \"  pixi run ast-demo-examples\"'"
+depends-on = ["build"]
+
+# Specialized AST Tasks
+[tasks.ast-pipeline]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"ls | grep test | wc -l\" | parse posix | get commands | table --expand'"
+depends-on = ["build"]
+
+[tasks.ast-conditional]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"if [ -f file.txt ]; then echo exists; fi\" | parse posix | get commands | table --expand'"
+depends-on = ["build"]
+
+[tasks.ast-loop]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"for i in 1 2 3; do echo $i; done\" | parse posix | get commands | table --expand'"
+depends-on = ["build"]
+
+# Comprehensive AST Analysis with Custom Script
+[tasks.ast-demo]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; use ./scripts/ast-demo.nu; ast-demo \"$SCRIPT\" --format $FORMAT'"
+depends-on = ["build"]
+env = { SCRIPT = "ls -la | grep test", FORMAT = "summary" }
+
+[tasks.ast-demo-file]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; use ./scripts/ast-demo.nu; ast-demo --file ./examples/sample.sh --format summary'"
+depends-on = ["build"]
+
+[tasks.ast-demo-examples]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; use ./scripts/ast-demo.nu; ast-demo --examples'"
+depends-on = ["build"]
+
+[tasks.ast-full-analysis]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; use ./scripts/ast-demo.nu; print \"=== JSON Analysis ===\"; ast-demo \"$SCRIPT\" --format json; print \"\\n=== Table Analysis ===\"; ast-demo \"$SCRIPT\" --format table; print \"\\n=== Summary Analysis ===\"; ast-demo \"$SCRIPT\" --format summary'"
+depends-on = ["build"]
+env = { SCRIPT = "if [ -f test.txt ]; then cat test.txt | grep hello | head -5; else echo not found; fi" }
+
+# Complete AST demonstration workflow
+[tasks.ast-showcase]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; use ./scripts/ast-demo.nu; print \"🎯 nu-posix AST Analysis Showcase\"; print \"═══════════════════════════════════════════════════════════════\"; print \"\\n1. Simple Command Analysis:\"; ast-demo \"echo hello world\" --format summary; print \"\\n2. Pipeline Analysis:\"; ast-demo \"ls -la | grep test | head -5\" --format table; print \"\\n3. Conditional Analysis:\"; ast-demo \"if [ -f test.txt ]; then cat test.txt; fi\" --format json; print \"\\n4. Loop Analysis:\"; ast-demo \"for i in 1 2 3; do echo $i; done\" --format summary; print \"\\n5. Sample File Analysis:\"; ast-demo --file ./examples/sample.sh --format summary; print \"\\n✅ AST Analysis Complete! Use pixi run ast-explorer for more options.\"'"
+depends-on = ["build"]
+
 [feature.dev.dependencies]
 # rust-analyzer = "*"
 

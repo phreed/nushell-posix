@@ -85,14 +85,57 @@ Make sure your Nushell version matches the plugin's target version.
 from posix --file script.sh
 ----
 
-=== Parsing POSIX scripts
+=== Parsing POSIX scripts and AST analysis
 
 [source,nushell]
 ----
 # Parse and examine the AST structure
 "echo hello | wc -l" | parse posix
 # Returns structured data showing the parsed components
+
+# Get AST as JSON for detailed analysis
+"ls | grep test" | parse posix | to json --indent 2
+
+# Analyze command structure
+"if [ -f file.txt ]; then echo exists; fi" | parse posix | get commands | table
 ----
+
+=== AST Analysis with Pixi Tasks
+
+The project includes comprehensive AST analysis capabilities through pixi tasks:
+
+[source,bash]
+----
+# Quick AST analysis
+pixi run show-ast SCRIPT="ls | grep test"
+
+# Analyze sample file
+pixi run show-ast-file
+
+# Compare original vs converted
+pixi run ast-compare SCRIPT="if [ -f test.txt ]; then cat test.txt; fi"
+
+# Comprehensive analysis with different formats
+pixi run ast-demo SCRIPT="for i in 1 2 3; do echo $i; done" FORMAT=summary
+pixi run ast-demo SCRIPT="ls -la | grep test" FORMAT=json
+pixi run ast-demo SCRIPT="if [ -f test ]; then echo yes; fi" FORMAT=table
+
+# Analyze from file
+pixi run ast-demo-file
+
+# Show all available AST analysis commands
+pixi run ast-explorer
+----
+
+==== AST Analysis Features
+
+* *JSON output*: Complete AST structure in JSON format
+* *Table format*: Command breakdown in tabular form
+* *Summary analysis*: High-level complexity and feature analysis
+* *Command statistics*: Count and categorize different command types
+* *Complexity scoring*: Rate script complexity from simple to very complex
+* *Feature detection*: Identify POSIX features used (pipelines, conditionals, loops, etc.)
+* *Side-by-side comparison*: View original POSIX alongside converted Nushell
 
 === Converting Nushell back to POSIX (experimental)
 
@@ -132,7 +175,32 @@ Parse POSIX shell script and return AST as structured data.
 [source,nushell]
 ----
 "for i in *.txt; do echo $i; done" | parse posix
+
+# Get detailed AST structure
+"ls | grep test | sort" | parse posix | to json --indent 2
+
+# Analyze command types
+"if [ -f file ]; then echo exists; fi" | parse posix | get commands | group-by type
 ----
+
+=== AST Analysis Commands
+
+The project includes additional AST analysis capabilities:
+
+[source,bash]
+----
+# Using pixi tasks for comprehensive analysis
+pixi run ast-demo SCRIPT="your_script_here" FORMAT=json|table|summary
+pixi run ast-demo-file  # Analyze examples/sample.sh
+pixi run ast-compare SCRIPT="your_script_here"  # Side-by-side comparison
+pixi run ast-full-analysis SCRIPT="your_script_here"  # All formats
+----
+
+*Analysis formats:*
+
+* *JSON*: Complete AST structure with full details
+* *Table*: Command breakdown with statistics
+* *Summary*: High-level analysis with complexity scoring
 
 === `to posix`
 
@@ -314,6 +382,24 @@ nu -c 'register ./target/debug/nu_plugin_posix'
 nu -c 'echo "ls | grep test" | from posix'
 ----
 
+=== AST Analysis Testing
+
+Test AST analysis features:
+
+[source,bash]
+----
+# Quick AST tests
+pixi run ast-demo SCRIPT="echo hello" FORMAT=json
+pixi run ast-demo SCRIPT="ls | grep test" FORMAT=summary
+
+# Test with sample files
+pixi run ast-demo-file
+pixi run ast-compare SCRIPT="if [ -f test ]; then echo yes; fi"
+
+# Explore all available commands
+pixi run ast-explorer
+----
+
 == Current Status
 
 This is an initial implementation with basic functionality.
@@ -358,6 +444,9 @@ This project is licensed under the GPL-3.0 license.
 * *Interactive mode*: CLI mode for batch processing scripts
 * *Configuration*: Customizable conversion rules and preferences
 * *Multiple output formats*: Support for different Nushell coding styles
+* *Enhanced AST analysis*: More detailed semantic analysis and visualization
+* *Performance optimization*: Faster parsing and conversion for large scripts
+* *Language server integration*: Real-time conversion feedback in editors
 
 == Acknowledgments
 
