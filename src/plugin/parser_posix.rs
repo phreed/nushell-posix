@@ -166,6 +166,57 @@ fn parse_with_yash_syntax(input: &str) -> Result<PosixScript> {
     ))
 }
 
+/* TODO: Implement yash-syntax integration when API is clarified
+fn convert_yash_command(cmd: &yash_syntax::syntax::Command) -> Result<PosixCommand> {
+    use yash_syntax::syntax::Command;
+
+    match cmd {
+        Command::Simple(simple) => convert_simple_command(simple),
+        Command::Compound(compound) => convert_compound_command(compound),
+        Command::Function(func) => convert_function_command(func),
+    }
+}
+
+fn convert_simple_command(simple: &yash_syntax::syntax::SimpleCommand) -> Result<PosixCommand> {
+    // Implementation details when API is clarified
+    unimplemented!()
+}
+
+fn convert_compound_command(
+    compound: &yash_syntax::syntax::CompoundCommand,
+) -> Result<PosixCommand> {
+    // Implementation details when API is clarified
+    unimplemented!()
+}
+
+fn convert_function_command(
+    func: &yash_syntax::syntax::FunctionDefinition,
+) -> Result<PosixCommand> {
+    // Implementation details when API is clarified
+    unimplemented!()
+}
+
+fn convert_and_or_list(list: &yash_syntax::syntax::AndOrList) -> Result<Vec<PosixCommand>> {
+    // Implementation details when API is clarified
+    unimplemented!()
+}
+
+fn convert_yash_pipeline(pipeline: &yash_syntax::syntax::Pipeline) -> Result<PosixCommand> {
+    // Implementation details when API is clarified
+    unimplemented!()
+}
+
+fn convert_word(word: &yash_syntax::syntax::Word) -> Result<String> {
+    // Implementation details when API is clarified
+    unimplemented!()
+}
+
+fn convert_yash_redirection(redir: &yash_syntax::syntax::Redirection) -> Result<Redirection> {
+    // Implementation details when API is clarified
+    unimplemented!()
+}
+*/
+
 /// Heuristic parser implementation as fallback
 fn parse_with_heuristic_parser(input: &str) -> Result<PosixScript> {
     let mut commands = Vec::new();
