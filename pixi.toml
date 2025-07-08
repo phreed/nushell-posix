@@ -10,23 +10,165 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 rust = ">=1.70"
 python = ">=3.12"
 
-[tasks]
-build = "cargo build"
-test = "cargo test"
-run = "cargo run"
-check = "cargo check"
-fmt = "cargo fmt"
-clippy = "cargo clippy"
-install = "cargo install --path ."
-register = "nu -c 'plugin add ./target/debug/nu_plugin_posix'"
-dev = "cargo build && nu -c 'plugin add ./target/debug/nu_plugin_posix; help from posix'"
-interactive = "cargo build && nu -c 'plugin add ./target/debug/nu_plugin_posix' && nu"
-demo = "cargo build && nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"ls -la\" | from posix'"
-test-plugin = "cargo build && nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"for i in 1 2 3 do echo $i done\" | from posix'"
-test-examples = "cargo run --example yash_integration"
-release-build = "cargo build --release"
-register-release = "nu -c 'plugin add ./target/release/nu_plugin_posix'"
-clean = "cargo clean"
+# TASKS
+[tasks.build]
+cmd = "cargo build"
+depends-on = ["full-clean"]
+
+[tasks.test]
+cmd = "cargo test"
+depends-on = ["full-clean"]
+
+[tasks.run]
+cmd = "cargo run"
+depends-on = ["full-clean"]
+
+[tasks.check]
+cmd = "cargo check"
+depends-on = ["full-clean"]
+
+[tasks.fmt]
+cmd = "cargo fmt"
+depends-on = ["full-clean"]
+
+[tasks.clippy]
+cmd = "cargo clippy"
+depends-on = ["full-clean"]
+
+[tasks.install]
+cmd = "cargo install --path ."
+depends-on = ["full-clean"]
+
+[tasks.test-examples]
+cmd = "cargo run --example yash_integration"
+depends-on = ["full-clean"]
+
+[tasks.release-build]
+cmd = "cargo build --release"
+depends-on = ["full-clean"]
+
+[tasks.clean]
+cmd = "cargo clean"
+depends-on = ["full-clean"]
+
+[tasks.register]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix'"
+depends-on = ["build"]
+
+[tasks.dev]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; help from posix'"
+depends-on = ["build"]
+
+[tasks.interactive]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix' && nu"
+depends-on = ["build"]
+
+[tasks.demo]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"ls -la\" | from posix'"
+depends-on = ["build"]
+
+[tasks.test-plugin]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"for i in 1 2 3 do echo $i done\" | from posix'"
+depends-on = ["build"]
+
+[tasks.register-release]
+cmd = "nu -c 'plugin add ./target/release/nu_plugin_posix'"
+depends-on = ["release-build"]
+
+# Enhanced development tasks
+[tasks.watch]
+cmd = "cargo watch -x 'build' -s 'nu -c \"plugin add ./target/debug/nu_plugin_posix\"'"
+
+[tasks.quick-test]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"echo hello world\" | from posix'"
+depends-on = ["build"]
+
+[tasks.test-pipeline]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"ls | grep test\" | from posix'"
+depends-on = ["build"]
+
+[tasks.test-control-flow]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"if [ -f file.txt ]; then echo exists; fi\" | from posix'"
+depends-on = ["build"]
+
+[tasks.test-loops]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"for i in 1 2 3; do echo $i; done\" | from posix'"
+depends-on = ["build"]
+
+[tasks.test-pretty]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"if true; then echo yes; fi\" | from posix --pretty'"
+depends-on = ["build"]
+
+# File-based testing
+[tasks.test-sample]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; from posix --file ./examples/sample.sh'"
+depends-on = ["build"]
+
+[tasks.test-sample-pretty]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; from posix --file ./examples/sample.sh --pretty'"
+depends-on = ["build"]
+
+# Parser testing
+[tasks.test-parser]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"echo hello | wc -l\" | parse posix'"
+depends-on = ["build"]
+
+[tasks.test-ast]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"for i in *.txt; do echo $i; done\" | parse posix'"
+depends-on = ["build"]
+
+# Conversion testing (experimental)
+[tasks.test-to-posix]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"print hello world\" | to posix'"
+depends-on = ["build"]
+
+# Release workflow
+[tasks.release-all]
+cmd = "nu -c 'plugin add ./target/release/nu_plugin_posix'"
+depends-on = ["release-build"]
+
+[tasks.release-test]
+cmd = "nu -c 'plugin add ./target/release/nu_plugin_posix; echo \"ls -la\" | from posix'"
+depends-on = ["release-build"]
+
+[tasks.release-interactive]
+cmd = "nu -c 'plugin add ./target/release/nu_plugin_posix' && nu"
+depends-on = ["release-build"]
+
+# Development helpers
+[tasks.full-clean]
+cmd = "cargo clean && rm -rf target"
+
+[tasks.docs]
+cmd = "cargo doc --open"
+depends-on = ["full-clean"]
+
+[tasks.bench]
+cmd = "cargo bench"
+depends-on = ["full-clean"]
+
+[tasks.validate]
+cmd = "nu --version && cargo --version && echo 'Environment validated'"
+depends-on = ["full-clean"]
+
+# Comprehensive workflow tasks
+[tasks.dev-workflow]
+depends-on = ["build", "test", "register", "quick-test"]
+
+[tasks.ci-check]
+depends-on = ["fmt", "clippy", "test"]
+
+[tasks.pre-commit]
+depends-on = ["ci-check", "demo"]
+
+# Interactive development sessions
+[tasks.dev-session]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; print \"nu-posix plugin loaded! Try: echo \\\"ls -la\\\" | from posix\"'"
+depends-on = ["build"]
+
+[tasks.test-session]
+cmd = "nu -c 'plugin add ./target/debug/nu_plugin_posix; print \"Test commands:\"; print \"  echo \\\"ls | grep test\\\" | from posix\"; print \"  echo \\\"if true; then echo yes; fi\\\" | from posix --pretty\"; print \"  from posix --file ./examples/sample.sh\"'"
+depends-on = ["build"]
 
 [feature.dev.dependencies]
 # rust-analyzer = "*"
