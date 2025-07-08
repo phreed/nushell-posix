@@ -1,16 +1,16 @@
-//! Test command converter
+//! Test builtin converter
 //!
-//! Converts POSIX `test` commands and `[` commands to Nushell boolean expressions
+//! Converts POSIX `test` and `[` builtin commands to Nushell conditional expressions
 
-use super::{BaseConverter, CommandConverter};
+use super::{BaseBuiltinConverter, BuiltinConverter};
 use anyhow::Result;
 
-/// Converter for the `test` command and `[` builtin
-pub struct TestConverter;
+/// Converter for the `test` builtin
+pub struct TestBuiltinConverter;
 
-impl CommandConverter for TestConverter {
+impl BuiltinConverter for TestBuiltinConverter {
     fn convert(&self, args: &[String]) -> Result<String> {
-        let base = BaseConverter;
+        let base = BaseBuiltinConverter;
 
         if args.is_empty() {
             return Ok("false".to_string());
@@ -26,18 +26,17 @@ impl CommandConverter for TestConverter {
         }
     }
 
-    fn command_name(&self) -> &'static str {
+    fn builtin_name(&self) -> &'static str {
         "test"
     }
 
     fn description(&self) -> &'static str {
-        "Converts test commands to Nushell boolean expressions"
+        "Converts test builtin commands to Nushell conditional expressions"
     }
 }
 
-impl TestConverter {
-    /// Convert single argument test (string non-empty check)
-    fn convert_unary_test(&self, args: &[String], base: &BaseConverter) -> Result<String> {
+impl TestBuiltinConverter {
+    fn convert_unary_test(&self, args: &[String], base: &BaseBuiltinConverter) -> Result<String> {
         let arg = &args[0];
         if arg == "]" {
             Ok("true".to_string())
@@ -47,7 +46,7 @@ impl TestConverter {
     }
 
     /// Convert two argument test (unary operators)
-    fn convert_binary_test(&self, args: &[String], base: &BaseConverter) -> Result<String> {
+    fn convert_binary_test(&self, args: &[String], base: &BaseBuiltinConverter) -> Result<String> {
         let op = &args[0];
         let arg = &args[1];
 
@@ -93,7 +92,7 @@ impl TestConverter {
     }
 
     /// Convert three argument test (binary operators)
-    fn convert_ternary_test(&self, args: &[String], base: &BaseConverter) -> Result<String> {
+    fn convert_ternary_test(&self, args: &[String], base: &BaseBuiltinConverter) -> Result<String> {
         let left = &args[0];
         let op = &args[1];
         let right = &args[2];
@@ -155,18 +154,22 @@ impl TestConverter {
     }
 
     /// Convert four argument test (handle [ expr ] format)
-    fn convert_bracket_test(&self, args: &[String], _base: &BaseConverter) -> Result<String> {
+    fn convert_bracket_test(
+        &self,
+        args: &[String],
+        _base: &BaseBuiltinConverter,
+    ) -> Result<String> {
         if args[0] == "[" && args[3] == "]" {
             // Convert to 3-argument test
-            self.convert_ternary_test(&args[1..3].to_vec(), &BaseConverter)
+            self.convert_ternary_test(&args[1..3].to_vec(), &BaseBuiltinConverter)
         } else {
             // Fall back to complex test
-            self.convert_complex_test(args, &BaseConverter)
+            self.convert_complex_test(args, &BaseBuiltinConverter)
         }
     }
 
     /// Convert complex test expressions with logical operators
-    fn convert_complex_test(&self, args: &[String], base: &BaseConverter) -> Result<String> {
+    fn convert_complex_test(&self, args: &[String], base: &BaseBuiltinConverter) -> Result<String> {
         // Handle [ ... ] wrapper
         let actual_args = if args.len() >= 2 && args[0] == "[" && args[args.len() - 1] == "]" {
             &args[1..args.len() - 1]
@@ -247,8 +250,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_test_converter() {
-        let converter = TestConverter;
+    fn test_test_builtin_converter() {
+        let converter = TestBuiltinConverter;
 
         // Empty test
         assert_eq!(converter.convert(&[]).unwrap(), "false");
@@ -368,7 +371,7 @@ mod tests {
 
     #[test]
     fn test_complex_expressions() {
-        let converter = TestConverter;
+        let converter = TestBuiltinConverter;
 
         // Test with logical AND
         assert_eq!(

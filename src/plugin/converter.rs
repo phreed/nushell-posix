@@ -1,8 +1,10 @@
+use super::builtin::BuiltinRegistry;
 use super::parser_posix::{
     AndOrData, AndOrOperator, Assignment, CompoundCommandData, CompoundCommandKind, ListData,
     ListSeparator, PipelineData, PosixCommand, PosixScript, Redirection, RedirectionOp,
     SimpleCommandData,
 };
+use super::sus::CommandRegistry;
 use anyhow::Result;
 
 pub struct PosixToNuConverter {
@@ -10,6 +12,8 @@ pub struct PosixToNuConverter {
     _use_modern_syntax: bool,
     _preserve_comments: bool,
     _convert_pipes: bool,
+    command_registry: CommandRegistry,
+    builtin_registry: BuiltinRegistry,
 }
 
 impl PosixToNuConverter {
@@ -18,6 +22,8 @@ impl PosixToNuConverter {
             _use_modern_syntax: true,
             _preserve_comments: true,
             _convert_pipes: true,
+            command_registry: CommandRegistry::new(),
+            builtin_registry: BuiltinRegistry::new(),
         }
     }
 
@@ -76,211 +82,20 @@ impl PosixToNuConverter {
     }
 
     fn convert_command_name(&self, name: &str, args: &[String]) -> Result<String> {
+        // First try to use the builtin registry for shell builtins
+        if let Ok(nu_command) = self.builtin_registry.convert_builtin(name, args) {
+            return Ok(nu_command);
+        }
+
+        // Then try to use the SUS command registry for external utilities
+        if let Ok(nu_command) = self.command_registry.convert_command(name, args) {
+            return Ok(nu_command);
+        }
+
+        // Fallback to legacy conversions for commands not in SUS or builtin
         match name {
-            // Core utilities conversion
-            "echo" => {
-                if args.is_empty() {
-                    Ok("print".to_string())
-                } else {
-                    Ok(format!("print {}", self.format_args(args)))
-                }
-            }
-            "cat" => {
-                if args.is_empty() {
-                    Ok("input".to_string())
-                } else if args.len() == 1 {
-                    Ok(format!("open --raw {}", self.quote_arg(&args[0])))
-                } else {
-                    Ok(format!(
-                        "open --raw {}",
-                        args.iter()
-                            .map(|a| self.quote_arg(a))
-                            .collect::<Vec<_>>()
-                            .join(" ")
-                    ))
-                }
-            }
-            "ls" => {
-                if args.is_empty() {
-                    Ok("ls".to_string())
-                } else {
-                    // Handle common ls flags
-                    let mut nu_args = Vec::new();
-                    let mut has_long = false;
-                    let mut has_all = false;
-
-                    for arg in args {
-                        match arg.as_str() {
-                            "-l" => {
-                                has_long = true;
-                                nu_args.push("--long".to_string());
-                            }
-                            "-a" => {
-                                has_all = true;
-                                nu_args.push("--all".to_string());
-                            }
-                            "-la" | "-al" => {
-                                has_long = true;
-                                has_all = true;
-                                nu_args.push("--long".to_string());
-                                nu_args.push("--all".to_string());
-                            }
-                            "-h" => nu_args.push("--help".to_string()),
-                            "-d" => {
-                                // Directory listing in Nu is different
-                                nu_args.push("| where type == dir".to_string());
-                            }
-                            _ if arg.starts_with('-') => {
-                                // Try to convert other flags
-                                nu_args.push(arg.clone());
-                            }
-                            _ => nu_args.push(self.quote_arg(arg)),
-                        }
-                    }
-
-                    if nu_args.is_empty() {
-                        Ok("ls".to_string())
-                    } else {
-                        Ok(format!("ls {}", nu_args.join(" ")))
-                    }
-                }
-            }
-            "grep" => {
-                if args.is_empty() {
-                    Ok("grep".to_string())
-                } else {
-                    // Convert grep to where clause when possible
-                    let pattern = &args[0];
-                    if args.len() == 1 {
-                        Ok(format!("where $it =~ {}", self.quote_arg(pattern)))
-                    } else if args.len() == 2 {
-                        // grep pattern file -> open file | lines | where $it =~ pattern
-                        Ok(format!(
-                            "open {} | lines | where $it =~ {}",
-                            self.quote_arg(&args[1]),
-                            self.quote_arg(pattern)
-                        ))
-                    } else {
-                        Ok(format!("grep {}", self.format_args(args)))
-                    }
-                }
-            }
-            "find" => {
-                if args.is_empty() {
-                    Ok("find".to_string())
-                } else if args.len() >= 3 && args[1] == "-name" {
-                    // find . -name pattern -> ls **/pattern
-                    let pattern = &args[2];
-                    if args[0] == "." {
-                        Ok(format!("ls **/{}", pattern.trim_matches('"')))
-                    } else {
-                        Ok(format!(
-                            "ls {}/{}/**/{}",
-                            self.quote_arg(&args[0]),
-                            "",
-                            pattern.trim_matches('"')
-                        ))
-                    }
-                } else if args.len() >= 3 && args[1] == "-type" {
-                    // find . -type d -> ls | where type == dir
-                    let file_type = &args[2];
-                    let base_path = if args[0] == "." { "" } else { &args[0] };
-                    match file_type.as_str() {
-                        "d" => Ok(format!("ls {}/**/* | where type == dir", base_path)),
-                        "f" => Ok(format!("ls {}/**/* | where type == file", base_path)),
-                        _ => Ok(format!("find {}", self.format_args(args))),
-                    }
-                } else if args.len() >= 5 && args[1] == "-name" && args[3] == "-type" {
-                    // find . -name pattern -type d
-                    let pattern = &args[2];
-                    let file_type = &args[4];
-                    let base_path = if args[0] == "." {
-                        "**/"
-                    } else {
-                        &format!("{}/**/", args[0])
-                    };
-                    match file_type.as_str() {
-                        "d" => Ok(format!(
-                            "ls {}{} | where type == dir",
-                            base_path,
-                            pattern.trim_matches('"')
-                        )),
-                        "f" => Ok(format!(
-                            "ls {}{} | where type == file",
-                            base_path,
-                            pattern.trim_matches('"')
-                        )),
-                        _ => Ok(format!("find {}", self.format_args(args))),
-                    }
-                } else {
-                    // Basic find conversion for other cases
-                    Ok(format!("find {}", self.format_args(args)))
-                }
-            }
             "sort" => Ok("sort".to_string()),
             "uniq" => Ok("uniq".to_string()),
-            "head" => {
-                if args.is_empty() {
-                    Ok("first 10".to_string())
-                } else if args.len() == 2 && args[0] == "-n" {
-                    Ok(format!("first {}", args[1]))
-                } else if args.len() == 1
-                    && args[0].starts_with('-')
-                    && args[0][1..].parse::<i32>().is_ok()
-                {
-                    // head -5 -> first 5
-                    Ok(format!("first {}", &args[0][1..]))
-                } else {
-                    Ok(format!("head {}", self.format_args(args)))
-                }
-            }
-            "tail" => {
-                if args.is_empty() {
-                    Ok("last 10".to_string())
-                } else if args.len() == 2 && args[0] == "-n" {
-                    Ok(format!("last {}", args[1]))
-                } else if args.len() == 1
-                    && args[0].starts_with('-')
-                    && args[0][1..].parse::<i32>().is_ok()
-                {
-                    // tail -5 -> last 5
-                    Ok(format!("last {}", &args[0][1..]))
-                } else {
-                    Ok(format!("tail {}", self.format_args(args)))
-                }
-            }
-            "wc" => {
-                if args.is_empty() {
-                    Ok("wc".to_string())
-                } else if args.contains(&"-l".to_string()) {
-                    Ok("lines | length".to_string())
-                } else if args.contains(&"-w".to_string()) {
-                    Ok("str words | length".to_string())
-                } else if args.contains(&"-c".to_string()) {
-                    Ok("str length".to_string())
-                } else {
-                    Ok(format!("wc {}", self.format_args(args)))
-                }
-            }
-            "cut" => {
-                if args.is_empty() {
-                    Ok("cut".to_string())
-                } else if args.len() >= 2 && args[0] == "-d" {
-                    let delimiter = &args[1];
-                    if args.len() >= 4 && args[2] == "-f" {
-                        let field = &args[3];
-                        Ok(format!(
-                            "split row {} | get {}",
-                            self.quote_arg(delimiter),
-                            field.parse::<i32>().unwrap_or(1) - 1
-                        ))
-                    } else {
-                        Ok(format!("cut {}", self.format_args(args)))
-                    }
-                } else {
-                    Ok(format!("cut {}", self.format_args(args)))
-                }
-            }
             "awk" => {
                 // Basic awk conversion - this is very limited
                 if args.is_empty() {
@@ -301,84 +116,12 @@ impl PosixToNuConverter {
                     Ok(format!("awk {}", self.format_args(args)))
                 }
             }
-            "sed" => {
-                // Basic sed conversion
-                if args.is_empty() {
-                    Ok("sed".to_string())
-                } else if args.len() == 1 {
-                    let pattern = &args[0];
-                    if pattern.starts_with("s/") {
-                        // Simple substitution: s/old/new/flags
-                        let parts: Vec<&str> = pattern.split('/').collect();
-                        if parts.len() >= 3 {
-                            Ok(format!(
-                                "str replace {} {}",
-                                self.quote_arg(parts[1]),
-                                self.quote_arg(parts[2])
-                            ))
-                        } else {
-                            Ok(format!("sed {}", self.format_args(args)))
-                        }
-                    } else {
-                        Ok(format!("sed {}", self.format_args(args)))
-                    }
-                } else {
-                    Ok(format!("sed {}", self.format_args(args)))
-                }
-            }
-            "rm" => {
-                if args.is_empty() {
-                    Ok("rm".to_string())
-                } else {
-                    Ok(format!("rm {}", self.format_args(args)))
-                }
-            }
-            "cp" => {
-                if args.len() >= 2 {
-                    Ok(format!(
-                        "cp {} {}",
-                        self.quote_arg(&args[0]),
-                        self.quote_arg(&args[1])
-                    ))
-                } else {
-                    Ok(format!("cp {}", self.format_args(args)))
-                }
-            }
-            "mv" => {
-                if args.len() >= 2 {
-                    Ok(format!(
-                        "mv {} {}",
-                        self.quote_arg(&args[0]),
-                        self.quote_arg(&args[1])
-                    ))
-                } else {
-                    Ok(format!("mv {}", self.format_args(args)))
-                }
-            }
-            "mkdir" => Ok(format!("mkdir {}", self.format_args(args))),
             "rmdir" => Ok(format!("rmdir {}", self.format_args(args))),
             "pwd" => Ok("pwd".to_string()),
-            "cd" => {
-                if args.is_empty() {
-                    Ok("cd".to_string())
-                } else {
-                    Ok(format!("cd {}", self.quote_arg(&args[0])))
-                }
-            }
             "chmod" => Ok(format!("chmod {}", self.format_args(args))),
             "chown" => Ok(format!("chown {}", self.format_args(args))),
             "which" => Ok(format!("which {}", self.format_args(args))),
             "whoami" => Ok("whoami".to_string()),
-            "date" => {
-                if args.is_empty() {
-                    Ok("date now".to_string())
-                } else if args.len() == 2 && args[0] == "-d" {
-                    // date -d "string" -> "string" | into datetime
-                    Ok(format!("{} | into datetime", self.quote_arg(&args[1])))
-                } else {
-                    Ok(format!("date {}", self.format_args(args)))
-                }
-            }
             "ps" => Ok("ps".to_string()),
             "kill" => Ok(format!("kill {}", self.format_args(args))),
             "jobs" => Ok("jobs".to_string()),
@@ -422,169 +165,12 @@ impl PosixToNuConverter {
                     Ok(format!("tee {}", self.format_args(args)))
                 }
             }
-            "test" | "[" => self.convert_test_command(args),
             _ => {
                 // Unknown command, pass through with args
                 if args.is_empty() {
                     Ok(name.to_string())
                 } else {
                     Ok(format!("{} {}", name, self.format_args(args)))
-                }
-            }
-        }
-    }
-
-    fn convert_test_command(&self, args: &[String]) -> Result<String> {
-        if args.is_empty() {
-            return Ok("false".to_string());
-        }
-
-        // Handle common test patterns
-        match args.len() {
-            1 => {
-                // Single argument test
-                let arg = &args[0];
-                if arg == "]" {
-                    Ok("true".to_string())
-                } else {
-                    Ok(format!("({} | is-not-empty)", self.quote_arg(arg)))
-                }
-            }
-            2 => {
-                // Unary operators
-                let op = &args[0];
-                let arg = &args[1];
-                match op.as_str() {
-                    "-f" => Ok(format!("({} | path exists)", self.quote_arg(arg))),
-                    "-d" => Ok(format!("({} | path type) == \"dir\"", self.quote_arg(arg))),
-                    "-e" => Ok(format!("({} | path exists)", self.quote_arg(arg))),
-                    "-r" => Ok(format!(
-                        "({} | path exists and ({} | path type) == \"file\")",
-                        self.quote_arg(arg),
-                        self.quote_arg(arg)
-                    )),
-                    "-w" => Ok(format!("({} | path exists)", self.quote_arg(arg))),
-                    "-x" => Ok(format!("({} | path exists)", self.quote_arg(arg))),
-                    "-s" => Ok(format!(
-                        "({} | path exists and (open {} | length) > 0)",
-                        self.quote_arg(arg),
-                        self.quote_arg(arg)
-                    )),
-                    "-L" => Ok(format!(
-                        "({} | path type) == \"symlink\"",
-                        self.quote_arg(arg)
-                    )),
-                    "-b" => Ok(format!(
-                        "({} | path type) == \"block\"",
-                        self.quote_arg(arg)
-                    )),
-                    "-c" => Ok(format!("({} | path type) == \"char\"", self.quote_arg(arg))),
-                    "-p" => Ok(format!("({} | path type) == \"fifo\"", self.quote_arg(arg))),
-                    "-S" => Ok(format!(
-                        "({} | path type) == \"socket\"",
-                        self.quote_arg(arg)
-                    )),
-                    "-t" => Ok(format!("({} | into int) in [0, 1, 2]", self.quote_arg(arg))),
-                    "-z" => Ok(format!("({} | is-empty)", self.quote_arg(arg))),
-                    "-n" => Ok(format!("({} | is-not-empty)", self.quote_arg(arg))),
-                    _ => Ok(format!("test {} {}", op, self.quote_arg(arg))),
-                }
-            }
-            3 => {
-                // Binary operators
-                let left = &args[0];
-                let op = &args[1];
-                let right = &args[2];
-                match op.as_str() {
-                    "=" | "==" => Ok(format!(
-                        "{} == {}",
-                        self.quote_arg(left),
-                        self.quote_arg(right)
-                    )),
-                    "!=" => Ok(format!(
-                        "{} != {}",
-                        self.quote_arg(left),
-                        self.quote_arg(right)
-                    )),
-                    "-eq" => Ok(format!("{} == {}", left, right)),
-                    "-ne" => Ok(format!("{} != {}", left, right)),
-                    "-lt" => Ok(format!("{} < {}", left, right)),
-                    "-le" => Ok(format!("{} <= {}", left, right)),
-                    "-gt" => Ok(format!("{} > {}", left, right)),
-                    "-ge" => Ok(format!("{} >= {}", left, right)),
-                    "-nt" => Ok(format!("({} | path exists) and ({} | path exists) and (({} | get modified) > ({} | get modified))",
-                                       self.quote_arg(left), self.quote_arg(right), self.quote_arg(left), self.quote_arg(right))),
-                    "-ot" => Ok(format!("({} | path exists) and ({} | path exists) and (({} | get modified) < ({} | get modified))",
-                                       self.quote_arg(left), self.quote_arg(right), self.quote_arg(left), self.quote_arg(right))),
-                    "-ef" => Ok(format!("({} | path exists) and ({} | path exists) and (({} | get inode) == ({} | get inode))",
-                                       self.quote_arg(left), self.quote_arg(right), self.quote_arg(left), self.quote_arg(right))),
-                    _ => Ok(format!("test {} {} {}", left, op, right)),
-                }
-            }
-            4 => {
-                // Handle [ expr ] format
-                if args[0] == "[" && args[3] == "]" {
-                    // Convert to 3-argument test
-                    self.convert_test_command(&args[1..3].to_vec())
-                } else {
-                    // Complex test expressions
-                    Ok(format!("test {}", self.format_args(args)))
-                }
-            }
-            _ => {
-                // Complex test expressions - try to handle some common patterns
-                if args.len() >= 3 {
-                    let mut result = String::new();
-                    let mut i = 0;
-
-                    // Handle [ ... ] wrapper
-                    if args[0] == "[" && args[args.len() - 1] == "]" {
-                        let inner_args = &args[1..args.len() - 1];
-                        return self.convert_test_command(&inner_args.to_vec());
-                    }
-
-                    // Handle logical operators
-                    while i < args.len() {
-                        if i + 2 < args.len() {
-                            match args[i + 1].as_str() {
-                                "-a" | "&&" => {
-                                    // AND operation
-                                    if !result.is_empty() {
-                                        result.push_str(" and ");
-                                    }
-                                    result.push_str(&format!(
-                                        "({})",
-                                        self.convert_test_command(&args[i..i + 1].to_vec())?
-                                    ));
-                                    i += 2;
-                                }
-                                "-o" | "||" => {
-                                    // OR operation
-                                    if !result.is_empty() {
-                                        result.push_str(" or ");
-                                    }
-                                    result.push_str(&format!(
-                                        "({})",
-                                        self.convert_test_command(&args[i..i + 1].to_vec())?
-                                    ));
-                                    i += 2;
-                                }
-                                _ => {
-                                    i += 1;
-                                }
-                            }
-                        } else {
-                            i += 1;
-                        }
-                    }
-
-                    if result.is_empty() {
-                        Ok(format!("test {}", self.format_args(args)))
-                    } else {
-                        Ok(result)
-                    }
-                } else {
-                    Ok(format!("test {}", self.format_args(args)))
                 }
             }
         }

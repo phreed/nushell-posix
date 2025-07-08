@@ -317,6 +317,6 @@ mod tests {
         assert_eq!(parse_range_list("1-3"), vec![1, 2, 3]);
         assert_eq!(parse_range_list("1,3-5,7"), vec![1, 3, 4, 5, 7]);
         assert_eq!(parse_range_list("5-7,3,1"), vec![1, 3, 5, 6, 7]);
-        assert_eq!(parse_range_list(""), vec![]);
+        assert_eq!(parse_range_list(""), Vec::<usize>::new());
     }
 }

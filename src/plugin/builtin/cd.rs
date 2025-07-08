@@ -1,16 +1,16 @@
-//! Cd command converter
+//! Cd builtin converter
 //!
-//! Converts POSIX `cd` commands to Nushell `cd` commands
+//! Converts POSIX `cd` builtin commands to Nushell `cd` commands
 
-use super::{BaseConverter, CommandConverter};
+use super::{BaseBuiltinConverter, BuiltinConverter};
 use anyhow::Result;
 
-/// Converter for the `cd` command
-pub struct CdConverter;
+/// Converter for the `cd` builtin
+pub struct CdBuiltinConverter;
 
-impl CommandConverter for CdConverter {
+impl BuiltinConverter for CdBuiltinConverter {
     fn convert(&self, args: &[String]) -> Result<String> {
-        let base = BaseConverter;
+        let base = BaseBuiltinConverter;
 
         if args.is_empty() {
             return Ok("cd".to_string());
@@ -48,12 +48,12 @@ impl CommandConverter for CdConverter {
         }
     }
 
-    fn command_name(&self) -> &'static str {
+    fn builtin_name(&self) -> &'static str {
         "cd"
     }
 
     fn description(&self) -> &'static str {
-        "Converts cd commands to Nushell cd commands"
+        "Converts cd builtin commands to Nushell cd commands"
     }
 }
 
@@ -62,8 +62,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_cd_converter() {
-        let converter = CdConverter;
+    fn test_cd_builtin_converter() {
+        let converter = CdBuiltinConverter;
 
         // Empty cd (home directory)
         assert_eq!(converter.convert(&[]).unwrap(), "cd");

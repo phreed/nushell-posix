@@ -43,7 +43,6 @@ impl BaseConverter {
 
 // Command converter modules
 pub mod cat;
-pub mod cd;
 pub mod cp;
 pub mod cut;
 pub mod date;
@@ -57,12 +56,10 @@ pub mod mv;
 pub mod rm;
 pub mod sed;
 pub mod tail;
-pub mod test;
 pub mod wc;
 
 // Re-export all converters
 pub use cat::CatConverter;
-pub use cd::CdConverter;
 pub use cp::CpConverter;
 pub use cut::CutConverter;
 pub use date::DateConverter;
@@ -76,7 +73,6 @@ pub use mv::MvConverter;
 pub use rm::RmConverter;
 pub use sed::SedConverter;
 pub use tail::TailConverter;
-pub use test::TestConverter;
 pub use wc::WcConverter;
 
 /// Registry of all command converters
@@ -93,7 +89,6 @@ impl CommandRegistry {
 
         // Register all standard converters
         registry.register(Box::new(CatConverter));
-        registry.register(Box::new(CdConverter));
         registry.register(Box::new(CpConverter));
         registry.register(Box::new(CutConverter));
         registry.register(Box::new(DateConverter));
@@ -107,7 +102,6 @@ impl CommandRegistry {
         registry.register(Box::new(RmConverter));
         registry.register(Box::new(SedConverter));
         registry.register(Box::new(TailConverter));
-        registry.register(Box::new(TestConverter));
         registry.register(Box::new(WcConverter));
 
         registry
