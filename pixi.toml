@@ -2,12 +2,13 @@
 name = "nu-posix"
 version = "0.1.0"
 description = "A Rust tool to convert POSIX shell scripts to idiomatic Nushell syntax"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Your Name <fredrick.eisele@gmail.com>"]
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [dependencies]
 rust = ">=1.70"
+python = ">=3.12"
 
 [tasks]
 build = "cargo build"
@@ -17,11 +18,18 @@ check = "cargo check"
 fmt = "cargo fmt"
 clippy = "cargo clippy"
 install = "cargo install --path ."
-register = "nu -c 'register ./target/debug/nu_plugin_posix'"
-dev = "cargo build && nu -c 'register ./target/debug/nu_plugin_posix; help from-posix'"
+register = "nu -c 'plugin add ./target/debug/nu_plugin_posix'"
+dev = "cargo build && nu -c 'plugin add ./target/debug/nu_plugin_posix; help from posix'"
+interactive = "cargo build && nu -c 'plugin add ./target/debug/nu_plugin_posix' && nu"
+demo = "cargo build && nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"ls -la\" | from posix'"
+test-plugin = "cargo build && nu -c 'plugin add ./target/debug/nu_plugin_posix; echo \"for i in 1 2 3 do echo $i done\" | from posix'"
+test-examples = "cargo run --example yash_integration"
+release-build = "cargo build --release"
+register-release = "nu -c 'plugin add ./target/release/nu_plugin_posix'"
+clean = "cargo clean"
 
 [feature.dev.dependencies]
-rust-analyzer = "*"
+# rust-analyzer = "*"
 
 [environments]
 dev = ["dev"]

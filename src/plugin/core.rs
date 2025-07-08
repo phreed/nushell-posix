@@ -3,7 +3,7 @@ use nu_protocol::{
     Category, Example, LabeledError, Record, Signature, Span, SyntaxShape, Type, Value,
 };
 
-use super::{converter::PosixToNuConverter, parser::parse_posix_script};
+use super::{converter::PosixToNuConverter, parser_posix::parse_posix_script};
 
 pub struct PosixPlugin;
 
@@ -19,11 +19,7 @@ impl Plugin for PosixPlugin {
     }
 
     fn commands(&self) -> Vec<Box<dyn PluginCommand<Plugin = Self>>> {
-        vec![
-            Box::new(FromPosix),
-            Box::new(ToPosix),
-            Box::new(ParsePosix),
-        ]
+        vec![Box::new(FromPosix), Box::new(ToPosix), Box::new(ParsePosix)]
     }
 }
 
@@ -151,20 +147,16 @@ impl SimplePluginCommand for ToPosix {
 
     fn signature(&self) -> Signature {
         Signature::build("to posix")
-            .input_output_types(vec![
-                (Type::String, Type::String),
-            ])
+            .input_output_types(vec![(Type::String, Type::String)])
             .category(Category::Conversions)
     }
 
     fn examples(&self) -> Vec<Example> {
-        vec![
-            Example {
-                description: "Convert a simple Nushell command",
-                example: r#""print hello" | to posix"#,
-                result: Some(Value::test_string("echo hello")),
-            },
-        ]
+        vec![Example {
+            description: "Convert a simple Nushell command",
+            example: r#""print hello" | to posix"#,
+            result: Some(Value::test_string("echo hello")),
+        }]
     }
 
     fn run(
@@ -177,8 +169,9 @@ impl SimplePluginCommand for ToPosix {
         let nu_script = match input {
             Value::String { val, .. } => val.clone(),
             Value::Nothing { .. } => {
-                return Err(LabeledError::new("No input provided")
-                    .with_label("missing input", call.head));
+                return Err(
+                    LabeledError::new("No input provided").with_label("missing input", call.head)
+                );
             }
             _ => {
                 return Err(LabeledError::new("Input must be a string")
@@ -208,20 +201,16 @@ impl SimplePluginCommand for ParsePosix {
 
     fn signature(&self) -> Signature {
         Signature::build("parse posix")
-            .input_output_types(vec![
-                (Type::String, Type::Record(vec![].into())),
-            ])
+            .input_output_types(vec![(Type::String, Type::Record(vec![].into()))])
             .category(Category::Conversions)
     }
 
     fn examples(&self) -> Vec<Example> {
-        vec![
-            Example {
-                description: "Parse a POSIX script and show its structure",
-                example: r#""echo hello" | parse posix"#,
-                result: None, // Complex structured data
-            },
-        ]
+        vec![Example {
+            description: "Parse a POSIX script and show its structure",
+            example: r#""echo hello" | parse posix"#,
+            result: None, // Complex structured data
+        }]
     }
 
     fn run(
@@ -234,8 +223,9 @@ impl SimplePluginCommand for ParsePosix {
         let posix_script = match input {
             Value::String { val, .. } => val.clone(),
             Value::Nothing { .. } => {
-                return Err(LabeledError::new("No input provided")
-                    .with_label("missing input", call.head));
+                return Err(
+                    LabeledError::new("No input provided").with_label("missing input", call.head)
+                );
             }
             _ => {
                 return Err(LabeledError::new("Input must be a string")
@@ -293,56 +283,84 @@ fn basic_nu_to_posix_conversion(nu_script: &str) -> String {
         .replace(" =~ ", " | grep ")
 }
 
-fn convert_ast_to_value(script: &super::parser::PosixScript, span: Span) -> Value {
+fn convert_ast_to_value(script: &super::parser_posix::PosixScript, span: Span) -> Value {
     let mut record = Record::new();
-    record.insert("commands".to_string(), Value::list(
-        script.commands.iter().map(|cmd| convert_command_to_value(cmd, span)).collect(),
-        span,
-    ));
+    record.insert(
+        "commands".to_string(),
+        Value::list(
+            script
+                .commands
+                .iter()
+                .map(|cmd| convert_command_to_value(cmd, span))
+                .collect(),
+            span,
+        ),
+    );
 
     Value::record(record, span)
 }
 
-fn convert_command_to_value(command: &super::parser::PosixCommand, span: Span) -> Value {
+fn convert_command_to_value(command: &super::parser_posix::PosixCommand, span: Span) -> Value {
     let mut record = Record::new();
 
     match command {
-        super::parser::PosixCommand::Simple(cmd) => {
+        super::parser_posix::PosixCommand::Simple(cmd) => {
             record.insert("type".to_string(), Value::string("simple", span));
             record.insert("name".to_string(), Value::string(&cmd.name, span));
-            record.insert("args".to_string(), Value::list(
-                cmd.args.iter().map(|arg| Value::string(arg, span)).collect(),
-                span,
-            ));
+            record.insert(
+                "args".to_string(),
+                Value::list(
+                    cmd.args
+                        .iter()
+                        .map(|arg| Value::string(arg, span))
+                        .collect(),
+                    span,
+                ),
+            );
         }
-        super::parser::PosixCommand::Pipeline(pipe) => {
+        super::parser_posix::PosixCommand::Pipeline(pipe) => {
             record.insert("type".to_string(), Value::string("pipeline", span));
-            record.insert("commands".to_string(), Value::list(
-                pipe.commands.iter().map(|cmd| convert_command_to_value(cmd, span)).collect(),
-                span,
-            ));
+            record.insert(
+                "commands".to_string(),
+                Value::list(
+                    pipe.commands
+                        .iter()
+                        .map(|cmd| convert_command_to_value(cmd, span))
+                        .collect(),
+                    span,
+                ),
+            );
             record.insert("negated".to_string(), Value::bool(pipe.negated, span));
         }
-        super::parser::PosixCommand::Compound(_comp) => {
+        super::parser_posix::PosixCommand::Compound(_comp) => {
             record.insert("type".to_string(), Value::string("compound", span));
             record.insert("kind".to_string(), Value::string("compound", span)); // Simplified
         }
-        super::parser::PosixCommand::AndOr(and_or) => {
+        super::parser_posix::PosixCommand::AndOr(and_or) => {
             record.insert("type".to_string(), Value::string("andor", span));
-            record.insert("operator".to_string(), Value::string(
-                match and_or.operator {
-                    super::parser::AndOrOperator::And => "and",
-                    super::parser::AndOrOperator::Or => "or",
-                },
-                span,
-            ));
+            record.insert(
+                "operator".to_string(),
+                Value::string(
+                    match and_or.operator {
+                        super::parser_posix::AndOrOperator::And => "and",
+                        super::parser_posix::AndOrOperator::Or => "or",
+                    },
+                    span,
+                ),
+            );
         }
-        super::parser::PosixCommand::List(list) => {
+        super::parser_posix::PosixCommand::List(list) => {
             record.insert("type".to_string(), Value::string("list", span));
-            record.insert("commands".to_string(), Value::list(
-                list.commands.iter().map(|cmd| convert_command_to_value(cmd, span)).collect(),
-                span,
-            ));
+            record.insert(
+                "commands".to_string(),
+                Value::list(
+                    list.commands
+                        .iter()
+                        .map(|cmd| convert_command_to_value(cmd, span))
+                        .collect(),
+                    span,
+                ),
+            );
         }
     }
 

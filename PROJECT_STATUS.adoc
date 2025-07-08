@@ -65,9 +65,9 @@ nu-posix/
 === ⚠️ Current Limitations
 
 1. *POSIX Parser*
-   - Uses simple string parsing instead of full POSIX syntax tree
-   - `yash-syntax` integration deferred due to API complexity
-   - Limited handling of complex shell constructs
+   - Uses hybrid parsing approach: attempts yash-syntax first, falls back to simple parser
+   - `yash-syntax` dependency enabled but full integration still in progress
+   - Enhanced handling of basic shell constructs with fallback support
 
 2. *Conversion Scope*
    - Basic command mapping only
@@ -158,7 +158,7 @@ Test coverage includes:
 
 === Short-term (Priority 2)
 
-1. Integrate proper POSIX parser (yash-syntax)
+1. Complete full yash-syntax integration (currently uses fallback to simple parser)
 2. Add support for more control structures
 3. Implement better variable expansion handling
 

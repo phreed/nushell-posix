@@ -1,9 +1,9 @@
-use anyhow::Result;
-use super::parser::{
-    PosixScript, PosixCommand, SimpleCommandData, PipelineData, CompoundCommandData,
-    CompoundCommandKind, AndOrData, AndOrOperator, ListData, ListSeparator,
-    Assignment, Redirection, RedirectionOp,
+use super::parser_posix::{
+    AndOrData, AndOrOperator, Assignment, CompoundCommandData, CompoundCommandKind, ListData,
+    ListSeparator, PipelineData, PosixCommand, PosixScript, Redirection, RedirectionOp,
+    SimpleCommandData,
 };
+use anyhow::Result;
 
 pub struct PosixToNuConverter {
     // Configuration options for conversion
@@ -51,7 +51,10 @@ impl PosixToNuConverter {
         // Handle variable assignments
         if !cmd.assignments.is_empty() {
             for assignment in &cmd.assignments {
-                output.push_str(&format!("${} = \"{}\"; ", assignment.name, assignment.value));
+                output.push_str(&format!(
+                    "${} = \"{}\"; ",
+                    assignment.name, assignment.value
+                ));
             }
         }
 
@@ -88,7 +91,13 @@ impl PosixToNuConverter {
                 } else if args.len() == 1 {
                     Ok(format!("open {}", self.quote_arg(&args[0])))
                 } else {
-                    Ok(format!("open {}", args.iter().map(|a| self.quote_arg(a)).collect::<Vec<_>>().join(" ")))
+                    Ok(format!(
+                        "open {}",
+                        args.iter()
+                            .map(|a| self.quote_arg(a))
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                    ))
                 }
             }
             "ls" => {
@@ -188,14 +197,22 @@ impl PosixToNuConverter {
             }
             "cp" => {
                 if args.len() >= 2 {
-                    Ok(format!("cp {} {}", self.quote_arg(&args[0]), self.quote_arg(&args[1])))
+                    Ok(format!(
+                        "cp {} {}",
+                        self.quote_arg(&args[0]),
+                        self.quote_arg(&args[1])
+                    ))
                 } else {
                     Ok(format!("cp {}", self.format_args(args)))
                 }
             }
             "mv" => {
                 if args.len() >= 2 {
-                    Ok(format!("mv {} {}", self.quote_arg(&args[0]), self.quote_arg(&args[1])))
+                    Ok(format!(
+                        "mv {} {}",
+                        self.quote_arg(&args[0]),
+                        self.quote_arg(&args[1])
+                    ))
                 } else {
                     Ok(format!("mv {}", self.format_args(args)))
                 }
@@ -277,8 +294,16 @@ impl PosixToNuConverter {
                 let op = &args[1];
                 let right = &args[2];
                 match op.as_str() {
-                    "=" | "==" => Ok(format!("{} == {}", self.quote_arg(left), self.quote_arg(right))),
-                    "!=" => Ok(format!("{} != {}", self.quote_arg(left), self.quote_arg(right))),
+                    "=" | "==" => Ok(format!(
+                        "{} == {}",
+                        self.quote_arg(left),
+                        self.quote_arg(right)
+                    )),
+                    "!=" => Ok(format!(
+                        "{} != {}",
+                        self.quote_arg(left),
+                        self.quote_arg(right)
+                    )),
                     "-eq" => Ok(format!("{} == {}", left, right)),
                     "-ne" => Ok(format!("{} != {}", left, right)),
                     "-lt" => Ok(format!("{} < {}", left, right)),
@@ -342,11 +367,22 @@ impl PosixToNuConverter {
                 }
                 Ok(format!("({})", parts.join("; ")))
             }
-            CompoundCommandKind::For { variable, words, body } => {
+            CompoundCommandKind::For {
+                variable,
+                words,
+                body,
+            } => {
                 let items = if words.is_empty() {
                     "$in".to_string()
                 } else {
-                    format!("[{}]", words.iter().map(|w| self.quote_arg(w)).collect::<Vec<_>>().join(", "))
+                    format!(
+                        "[{}]",
+                        words
+                            .iter()
+                            .map(|w| self.quote_arg(w))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
                 };
 
                 let mut body_str = String::new();
@@ -354,7 +390,10 @@ impl PosixToNuConverter {
                     body_str.push_str(&format!("  {}\n", self.convert_command(command)?));
                 }
 
-                Ok(format!("{} | each {{ |{}| \n{}}}", items, variable, body_str))
+                Ok(format!(
+                    "{} | each {{ |{}| \n{}}}",
+                    items, variable, body_str
+                ))
             }
             CompoundCommandKind::While { condition, body } => {
                 let mut cond_parts = Vec::new();
@@ -367,7 +406,11 @@ impl PosixToNuConverter {
                     body_str.push_str(&format!("  {}\n", self.convert_command(command)?));
                 }
 
-                Ok(format!("while {} {{\n{}}}", cond_parts.join("; "), body_str))
+                Ok(format!(
+                    "while {} {{\n{}}}",
+                    cond_parts.join("; "),
+                    body_str
+                ))
             }
             CompoundCommandKind::Until { condition, body } => {
                 let mut cond_parts = Vec::new();
@@ -380,9 +423,18 @@ impl PosixToNuConverter {
                     body_str.push_str(&format!("  {}\n", self.convert_command(command)?));
                 }
 
-                Ok(format!("while not ({}) {{\n{}}}", cond_parts.join("; "), body_str))
+                Ok(format!(
+                    "while not ({}) {{\n{}}}",
+                    cond_parts.join("; "),
+                    body_str
+                ))
             }
-            CompoundCommandKind::If { condition, then_body, elif_parts, else_body } => {
+            CompoundCommandKind::If {
+                condition,
+                then_body,
+                elif_parts,
+                else_body,
+            } => {
                 let mut cond_parts = Vec::new();
                 for command in condition {
                     cond_parts.push(self.convert_command(command)?);
@@ -421,7 +473,12 @@ impl PosixToNuConverter {
                 let mut output = format!("match {} {{\n", self.quote_arg(word));
 
                 for item in items {
-                    let patterns = item.patterns.iter().map(|p| self.quote_arg(p)).collect::<Vec<_>>().join(" | ");
+                    let patterns = item
+                        .patterns
+                        .iter()
+                        .map(|p| self.quote_arg(p))
+                        .collect::<Vec<_>>()
+                        .join(" | ");
                     output.push_str(&format!("  {} => {{\n", patterns));
 
                     for command in &item.body {
@@ -443,6 +500,11 @@ impl PosixToNuConverter {
 
                 output.push('}');
                 Ok(output)
+            }
+            CompoundCommandKind::Arithmetic { expression } => {
+                // Convert arithmetic expression to Nushell math syntax
+                // This is a basic conversion - more sophisticated parsing could be added
+                Ok(format!("math eval \"{}\"", expression))
             }
         }
     }
@@ -526,7 +588,7 @@ impl Default for PosixToNuConverter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugin::parser::*;
+    use crate::plugin::parser_posix::*;
 
     #[test]
     fn test_convert_simple_echo() {

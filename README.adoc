@@ -5,16 +5,18 @@ A Nushell plugin to convert POSIX shell scripts to idiomatic Nushell syntax.
 == Overview
 
 `nu-posix` is a Nushell plugin that provides commands to parse and convert POSIX shell scripts into equivalent Nushell syntax.
-It uses the `yash-syntax` crate for robust POSIX shell parsing and provides intelligent conversion of common shell constructs.
+It uses a hybrid parsing approach that attempts to use the `yash-syntax` crate for robust POSIX shell parsing, with fallback to a simple parser for maximum compatibility.
 
 == Features
 
 * *POSIX to Nushell conversion*: Convert shell scripts to idiomatic Nushell syntax
+* *Hybrid parsing*: Uses yash-syntax for comprehensive parsing with simple parser fallback
 * *AST parsing*: Parse POSIX shell scripts and examine their structure
 * *Command mapping*: Intelligent conversion of common Unix commands
 * *Control flow*: Convert if/then/else, for loops, while loops, and case statements
 * *Pipeline conversion*: Transform shell pipelines to Nushell equivalents
 * *Error handling*: Comprehensive error reporting for parsing and conversion issues
+* *Graceful degradation*: Automatic fallback to simple parser when advanced parsing fails
 
 == Installation
 

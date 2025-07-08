@@ -141,14 +141,14 @@ pub fn parse_posix_script(input: &str) -> Result<PosixScript> {
     for line in input.lines() {
         let trimmed = line.trim();
         if !trimmed.is_empty() && !trimmed.starts_with('#') {
-            commands.push(parse_simple_command(trimmed));
+            commands.push(parse_heuristic_command(trimmed));
         }
     }
 
     Ok(PosixScript { commands })
 }
 
-fn parse_simple_command(command_str: &str) -> PosixCommand {
+fn parse_heuristic_command(command_str: &str) -> PosixCommand {
     // Simple command parsing
     let parts: Vec<&str> = command_str.split_whitespace().collect();
 
@@ -167,7 +167,7 @@ fn parse_simple_command(command_str: &str) -> PosixCommand {
         let mut commands = Vec::new();
 
         for part in pipeline_parts {
-            commands.push(parse_simple_command(part.trim()));
+            commands.push(parse_heuristic_command(part.trim()));
         }
 
         return PosixCommand::Pipeline(PipelineData {
@@ -180,16 +180,24 @@ fn parse_simple_command(command_str: &str) -> PosixCommand {
     if command_str.contains("&&") || command_str.contains("||") {
         let (left, op, right) = if command_str.contains("&&") {
             let parts: Vec<&str> = command_str.splitn(2, "&&").collect();
-            (parts[0].trim(), AndOrOperator::And, parts.get(1).unwrap_or(&"").trim())
+            (
+                parts[0].trim(),
+                AndOrOperator::And,
+                parts.get(1).unwrap_or(&"").trim(),
+            )
         } else {
             let parts: Vec<&str> = command_str.splitn(2, "||").collect();
-            (parts[0].trim(), AndOrOperator::Or, parts.get(1).unwrap_or(&"").trim())
+            (
+                parts[0].trim(),
+                AndOrOperator::Or,
+                parts.get(1).unwrap_or(&"").trim(),
+            )
         };
 
         return PosixCommand::AndOr(AndOrData {
-            left: Box::new(parse_simple_command(left)),
+            left: Box::new(parse_heuristic_command(left)),
             operator: op,
-            right: Box::new(parse_simple_command(right)),
+            right: Box::new(parse_heuristic_command(right)),
         });
     }
 
@@ -199,12 +207,14 @@ fn parse_simple_command(command_str: &str) -> PosixCommand {
         let condition_and_body: Vec<&str> = command_str.splitn(2, " then ").collect();
         if condition_and_body.len() == 2 {
             let condition = condition_and_body[0].strip_prefix("if ").unwrap_or("");
-            let then_body = condition_and_body[1].strip_suffix(" fi").unwrap_or(condition_and_body[1]);
+            let then_body = condition_and_body[1]
+                .strip_suffix(" fi")
+                .unwrap_or(condition_and_body[1]);
 
             return PosixCommand::Compound(CompoundCommandData {
                 kind: CompoundCommandKind::If {
-                    condition: vec![parse_simple_command(condition)],
-                    then_body: vec![parse_simple_command(then_body)],
+                    condition: vec![parse_heuristic_command(condition)],
+                    then_body: vec![parse_heuristic_command(then_body)],
                     elif_parts: vec![],
                     else_body: None,
                 },
@@ -219,13 +229,18 @@ fn parse_simple_command(command_str: &str) -> PosixCommand {
             if let Some(do_pos) = command_str.find(" do ") {
                 let var_part = &command_str[4..in_pos];
                 let words_part = &command_str[in_pos + 4..do_pos];
-                let body_part = command_str[do_pos + 4..].strip_suffix(" done").unwrap_or(&command_str[do_pos + 4..]);
+                let body_part = command_str[do_pos + 4..]
+                    .strip_suffix(" done")
+                    .unwrap_or(&command_str[do_pos + 4..]);
 
                 return PosixCommand::Compound(CompoundCommandData {
                     kind: CompoundCommandKind::For {
                         variable: var_part.to_string(),
-                        words: words_part.split_whitespace().map(|s| s.to_string()).collect(),
-                        body: vec![parse_simple_command(body_part)],
+                        words: words_part
+                            .split_whitespace()
+                            .map(|s| s.to_string())
+                            .collect(),
+                        body: vec![parse_heuristic_command(body_part)],
                     },
                     redirections: vec![],
                 });
@@ -255,7 +270,11 @@ fn parse_simple_command(command_str: &str) -> PosixCommand {
 
     // Simple command
     let name = command_parts.first().unwrap_or(&"").to_string();
-    let args = command_parts.iter().skip(1).map(|s| s.to_string()).collect();
+    let args = command_parts
+        .iter()
+        .skip(1)
+        .map(|s| s.to_string())
+        .collect();
 
     PosixCommand::Simple(SimpleCommandData {
         name,
@@ -360,15 +379,17 @@ mod tests {
         assert_eq!(result.commands.len(), 1);
 
         match &result.commands[0] {
-            PosixCommand::Compound(cmd) => {
-                match &cmd.kind {
-                    CompoundCommandKind::If { condition, then_body, .. } => {
-                        assert!(!condition.is_empty());
-                        assert!(!then_body.is_empty());
-                    }
-                    _ => panic!("Expected if command"),
+            PosixCommand::Compound(cmd) => match &cmd.kind {
+                CompoundCommandKind::If {
+                    condition,
+                    then_body,
+                    ..
+                } => {
+                    assert!(!condition.is_empty());
+                    assert!(!then_body.is_empty());
                 }
-            }
+                _ => panic!("Expected if command"),
+            },
             _ => panic!("Expected compound command"),
         }
     }
