@@ -6,6 +6,23 @@
 :source-highlighter: rouge
 :icons: font
 
+[discrete]
+== Guide Structure
+
+This guide is organized into three main sections:
+
+**Foundation**::
+Understanding the project context, current status, and overall architecture.
+(<<problem-description>>, <<project-status>>, <<architecture-overview>>)
+
+**Implementation**::
+Deep dive into the technical implementation details of parsers, converters, and command registries.
+(<<parser-integration>>, <<converter-architecture>>, <<command-registry>>, <<builtin-converters>>, <<sus-converters>>, <<awk-converter>>)
+
+**Development**::
+Practical guidance for testing, development workflows, and API usage.
+(<<converter-verification>>, <<testing-framework>>, <<development-guide>>, <<api-reference>>)
+
 == Overview
 
 This developer guide provides comprehensive technical documentation for contributing to and extending the nu-posix project. It covers the internal architecture, development workflows, testing frameworks, and API references needed to work with the codebase effectively.
@@ -28,19 +45,6 @@ Before using this guide, you should have:
 * Understanding of POSIX shell scripting
 * Knowledge of parsing and AST concepts
 * Basic understanding of compiler design principles
-
-== Guide Structure
-
-This guide is organized into three main sections:
-
-=== Foundation (Chapters 1-3)
-Understanding the project context, current status, and overall architecture.
-
-=== Implementation (Chapters 4-9)
-Deep dive into the technical implementation details of parsers, converters, and command registries.
-
-=== Development (Chapters 10-13)
-Practical guidance for testing, development workflows, and API usage.
 
 == Quick Start for Developers
 

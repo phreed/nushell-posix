@@ -1,5 +1,5 @@
-[[chapter-7]]
-= Chapter 7: Builtin Converters
+[[builtin-converters]]
+= Builtin Converters
 
 Builtin converters handle the core shell builtin commands that are fundamental to POSIX shell operation. These commands are typically implemented directly in the shell rather than as external programs, and they have the highest priority in the command registry.
 

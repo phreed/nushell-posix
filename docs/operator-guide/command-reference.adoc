@@ -1,5 +1,5 @@
-[[chapter-14]]
-= Chapter 14: Command Reference
+[[command-reference]]
+= Command Reference
 
 This chapter provides a comprehensive reference for all commands supported by the nu-posix plugin, organized by category with detailed conversion examples and usage patterns.
 

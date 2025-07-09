@@ -1,5 +1,5 @@
-[[chapter-10]]
-= Chapter 10: Converter Verification
+[[converter-verification]]
+= Converter Verification
 :toc:
 :toclevels: 3
 :sectnums:

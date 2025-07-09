@@ -1,5 +1,5 @@
-[[chapter-8]]
-= Chapter 8: SUS Converters
+[[sus-converters]]
+= SUS Converters
 
 SUS (Single Unix Specification) converters handle the standard Unix utilities that are specified in the POSIX standard. These converters provide comprehensive coverage of the most commonly used Unix commands, ensuring compatibility with existing shell scripts and workflows.
 

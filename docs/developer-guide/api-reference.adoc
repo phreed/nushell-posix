@@ -1,5 +1,5 @@
-[[chapter-13]]
-= Chapter 13: API Reference
+[[api-reference]]
+= API Reference
 
 This chapter provides comprehensive API documentation for the nu-posix plugin, including all public interfaces, data structures, and functions available for developers working with or extending the plugin.
 

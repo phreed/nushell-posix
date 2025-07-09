@@ -1,5 +1,5 @@
-[[chapter-11]]
-= Chapter 11: Testing Framework
+[[testing-framework]]
+= Testing Framework
 
 == Overview
 

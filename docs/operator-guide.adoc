@@ -6,6 +6,25 @@
 :source-highlighter: rouge
 :icons: font
 
+[discrete]
+== Guide Structure
+
+This guide is organized into four main sections:
+
+**Foundation**::
+Understanding why nu-posix exists, its current capabilities, and how it works at a high level.
+(<<problem-description>>, <<project-status>>, <<architecture-overview>>)
+
+**Installation & Setup**::
+Getting nu-posix installed and configured for your environment.
+
+**Usage & Operations**::
+Practical guidance for using nu-posix commands and solving common problems.
+(<<command-reference>>, <<troubleshooting>>)
+
+**Best Practices**::
+Recommended workflows and patterns for successful script migration.
+
 == Overview
 
 This operator guide provides comprehensive documentation for using the nu-posix plugin effectively in production environments. It covers installation, configuration, usage patterns, command reference, and troubleshooting for system administrators, DevOps engineers, and end users.
@@ -27,22 +46,6 @@ Before using this guide, you should have:
 * Experience with POSIX shell scripting (bash, sh, zsh)
 * Understanding of system administration concepts
 * Access to systems where scripts need to be converted
-
-== Guide Structure
-
-This guide is organized into four main sections:
-
-=== Foundation (Chapters 1-3)
-Understanding why nu-posix exists, its current capabilities, and how it works at a high level.
-
-=== Installation & Setup
-Getting nu-posix installed and configured for your environment.
-
-=== Usage & Operations (Chapters 14-15)
-Practical guidance for using nu-posix commands and solving common problems.
-
-=== Best Practices
-Recommended workflows and patterns for successful script migration.
 
 == Quick Start for Operators
 

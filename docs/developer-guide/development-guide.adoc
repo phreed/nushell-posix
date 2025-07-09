@@ -1,5 +1,5 @@
-[[chapter-12]]
-= Chapter 12: Development Guide
+[[development-guide]]
+= Development Guide
 
 This chapter provides comprehensive guidance for developing and extending the nu-posix project. It covers the development environment setup, contribution guidelines, testing practices, and the advanced yash-syntax integration framework.
 
