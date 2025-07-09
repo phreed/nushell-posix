@@ -1,0 +1,545 @@
+[[chapter-15]]
+= Chapter 15: Troubleshooting
+
+== Overview
+
+This chapter provides comprehensive troubleshooting guidance for common issues encountered when using the nu-posix plugin. It covers installation problems, conversion errors, performance issues, and provides solutions for various edge cases.
+
+== Installation Issues
+
+=== Plugin Registration Problems
+
+==== Symptom
+```
+Error: Plugin not found: nu-posix
+```
+
+==== Solutions
+
+1. **Verify Plugin Build**
+   ```bash
+   cargo build --release
+   ls -la target/release/nu-posix
+   ```
+
+2. **Check Plugin Registration**
+   ```nu
+   plugin list | where name =~ "nu-posix"
+   ```
+
+3. **Re-register Plugin**
+   ```nu
+   plugin rm nu-posix
+   plugin add target/release/nu-posix
+   plugin use nu-posix
+   ```
+
+==== Symptom
+```
+Error: Plugin failed to load
+```
+
+==== Solutions
+
+1. **Check Nushell Version Compatibility**
+   ```nu
+   version
+   ```
+   Ensure you're using Nushell 0.105 or compatible version.
+
+2. **Verify Plugin Dependencies**
+   ```bash
+   ldd target/release/nu-posix  # Linux
+   otool -L target/release/nu-posix  # macOS
+   ```
+
+3. **Rebuild Plugin**
+   ```bash
+   cargo clean
+   cargo build --release
+   ```
+
+=== Compilation Errors
+
+==== Symptom
+```
+error: failed to compile nu-posix
+```
+
+==== Solutions
+
+1. **Update Rust Toolchain**
+   ```bash
+   rustup update
+   rustup default stable
+   ```
+
+2. **Check Cargo.toml Dependencies**
+   Ensure all dependencies are compatible and up-to-date.
+
+3. **Clear Cargo Cache**
+   ```bash
+   cargo clean
+   rm -rf ~/.cargo/registry/cache
+   ```
+
+== Conversion Errors
+
+=== Parse Errors
+
+==== Symptom
+```
+Error: Parse error: unexpected token
+```
+
+==== Common Causes and Solutions
+
+1. **Malformed Shell Syntax**
+   - **Problem**: Invalid POSIX shell syntax
+   - **Solution**: Fix the original shell script or use fallback parser
+
+2. **Unsupported Shell Features**
+   - **Problem**: Advanced bash/zsh features not supported
+   - **Solution**: Use simpler POSIX-compatible syntax
+
+3. **Complex Quoting Issues**
+   - **Problem**: Complex nested quotes confuse parser
+   - **Solution**: Simplify quoting or escape manually
+
+==== Example Fix
+```bash
+# Original (problematic)
+echo "He said \"Hello '$USER'\" to me"
+
+# Fixed
+echo "He said \"Hello \$USER\" to me"
+```
+
+=== Conversion Errors
+
+==== Symptom
+```
+Error: Conversion error: unsupported command
+```
+
+==== Solutions
+
+1. **Check Command Registry**
+   ```nu
+   from posix --help
+   ```
+
+2. **Use External Command Fallback**
+   Most unsupported commands fall back to external execution automatically.
+
+3. **Add Custom Converter**
+   For frequently used commands, consider implementing a custom converter.
+
+==== Symptom
+```
+Error: Registry error: converter not found
+```
+
+==== Solutions
+
+1. **Verify Plugin Installation**
+   ```nu
+   plugin list | where name =~ "nu-posix"
+   ```
+
+2. **Check Command Spelling**
+   Ensure the command name is spelled correctly.
+
+3. **Update Plugin**
+   ```nu
+   plugin rm nu-posix
+   plugin add target/release/nu-posix
+   plugin use nu-posix
+   ```
+
+== Performance Issues
+
+=== Slow Conversion
+
+==== Symptom
+Conversion takes unexpectedly long time.
+
+==== Solutions
+
+1. **Check Script Size**
+   Large scripts may require more processing time.
+
+2. **Profile Performance**
+   ```bash
+   cargo build --release --features profiling
+   time nu -c '"large_script.sh" | open | from posix'
+   ```
+
+3. **Use Batch Processing**
+   For multiple files, process them in batches.
+
+4. **Optimize Script Content**
+   Complex constructs may slow down parsing.
+
+=== Memory Usage
+
+==== Symptom
+High memory usage during conversion.
+
+==== Solutions
+
+1. **Process Scripts in Chunks**
+   ```nu
+   "large_script.sh" | open | lines | each { |line| $line | from posix }
+   ```
+
+2. **Use Streaming Processing**
+   For very large files, process line by line.
+
+3. **Monitor Memory Usage**
+   ```bash
+   cargo build --release
+   valgrind --tool=memcheck ./target/release/nu-posix
+   ```
+
+== Output Issues
+
+=== Incorrect Nu Syntax
+
+==== Symptom
+Generated Nushell code doesn't work as expected.
+
+==== Solutions
+
+1. **Verify Original Script**
+   Ensure the original POSIX script is correct.
+
+2. **Check Conversion Logic**
+   ```nu
+   "echo hello" | from posix
+   ```
+
+3. **Test Step by Step**
+   Break down complex scripts into smaller parts.
+
+4. **Use Pretty Printing**
+   ```nu
+   "complex_script.sh" | open | from posix --pretty
+   ```
+
+=== Missing Features
+
+==== Symptom
+Some shell features are not converted.
+
+==== Solutions
+
+1. **Check Feature Support**
+   Review documentation for supported features.
+
+2. **Use Alternative Syntax**
+   Replace unsupported features with supported equivalents.
+
+3. **Manual Conversion**
+   For complex features, manual conversion may be necessary.
+
+== AWK-Specific Issues
+
+=== AWK Scripts Not Working
+
+==== Symptom
+```
+Error: AWK script fails to execute
+```
+
+==== Solutions
+
+1. **Check AWK Installation**
+   ```bash
+   which awk
+   awk --version
+   ```
+
+2. **Verify Argument Quoting**
+   ```nu
+   "awk '{ print $1 }' file.txt" | from posix
+   ```
+
+3. **Test AWK Script Directly**
+   ```bash
+   awk '{ print $1 }' file.txt
+   ```
+
+=== Complex AWK Programs
+
+==== Symptom
+Complex AWK programs produce incorrect results.
+
+==== Solutions
+
+1. **Simplify AWK Script**
+   Break complex scripts into smaller parts.
+
+2. **Use External Files**
+   ```bash
+   awk -f script.awk data.txt
+   ```
+
+3. **Verify Input Data**
+   Ensure input data format matches AWK expectations.
+
+== Registry Issues
+
+=== Command Not Found
+
+==== Symptom
+```
+Error: Command 'xyz' not found in registry
+```
+
+==== Solutions
+
+1. **Check Available Commands**
+   ```nu
+   # List all available converters
+   plugin list | where name =~ "nu-posix"
+   ```
+
+2. **Use External Command**
+   Commands not in registry are handled as external commands.
+
+3. **Verify Command Name**
+   Ensure the command name is spelled correctly.
+
+=== Converter Conflicts
+
+==== Symptom
+Wrong converter is used for a command.
+
+==== Solutions
+
+1. **Check Registry Priority**
+   Builtin converters have priority over SUS converters.
+
+2. **Use Explicit Conversion**
+   ```nu
+   "ls -la" | from posix  # Uses builtin registry first
+   ```
+
+3. **Debug Registry Lookup**
+   Enable debug logging to see converter selection.
+
+== Debug Techniques
+
+=== Enable Debug Logging
+
+```nu
+$env.RUST_LOG = "debug"
+"script.sh" | open | from posix
+```
+
+=== Use Verbose Output
+
+```nu
+"script.sh" | open | from posix --pretty
+```
+
+=== Step-by-Step Debugging
+
+```nu
+# Parse only
+"script.sh" | open | parse posix
+
+# Convert specific command
+"echo hello" | from posix
+
+# Test individual converter
+"ls -la" | from posix
+```
+
+=== Test with Simple Cases
+
+```nu
+# Start with simple cases
+"echo hello" | from posix
+
+# Gradually increase complexity
+"echo hello | grep h" | from posix
+```
+
+== Common Error Messages
+
+=== Parse Errors
+
+[cols="1,2,2"]
+|===
+|Error |Cause |Solution
+
+|`unexpected token`
+|Invalid shell syntax
+|Fix original script syntax
+
+|`unterminated string`
+|Missing quote
+|Add missing quote
+
+|`unexpected EOF`
+|Incomplete command
+|Complete the command
+
+|`invalid redirection`
+|Malformed redirection
+|Fix redirection syntax
+|===
+
+=== Conversion Errors
+
+[cols="1,2,2"]
+|===
+|Error |Cause |Solution
+
+|`unsupported command`
+|Command not in registry
+|Use external command fallback
+
+|`invalid arguments`
+|Incorrect argument format
+|Check argument syntax
+
+|`conversion failed`
+|Internal conversion error
+|Report bug or use workaround
+
+|`registry error`
+|Converter lookup failed
+|Check plugin installation
+|===
+
+== Performance Optimization
+
+=== Conversion Speed
+
+1. **Use Simpler Syntax**
+   Avoid complex shell constructs when possible.
+
+2. **Batch Processing**
+   Process multiple files together.
+
+3. **Incremental Conversion**
+   Convert scripts in parts for large files.
+
+=== Memory Usage
+
+1. **Process Line by Line**
+   ```nu
+   "large_script.sh" | open | lines | each { |line| $line | from posix }
+   ```
+
+2. **Use Streaming**
+   Avoid loading entire files into memory.
+
+3. **Clear Variables**
+   ```nu
+   let result = ("script.sh" | open | from posix)
+   $result
+   ```
+
+== Best Practices
+
+=== Script Preparation
+
+1. **Validate Original Scripts**
+   Ensure POSIX compatibility before conversion.
+
+2. **Use Standard Syntax**
+   Avoid shell-specific extensions.
+
+3. **Test Incrementally**
+   Convert and test small parts first.
+
+=== Conversion Process
+
+1. **Start Simple**
+   Begin with basic commands and pipelines.
+
+2. **Verify Results**
+   Test converted Nu code before using.
+
+3. **Document Changes**
+   Keep track of manual modifications.
+
+=== Error Handling
+
+1. **Expect Fallbacks**
+   Some commands will use external execution.
+
+2. **Validate Output**
+   Always test converted code.
+
+3. **Have Backups**
+   Keep original scripts as backup.
+
+== Getting Help
+
+=== Documentation
+
+1. **Check Documentation**
+   Review all chapters in this book.
+
+2. **Read API Reference**
+   Consult the API documentation.
+
+3. **Review Examples**
+   Look at provided examples and test cases.
+
+=== Community Support
+
+1. **GitHub Issues**
+   Report bugs and request features.
+
+2. **Nushell Community**
+   Ask questions in Nushell Discord/forum.
+
+3. **Contribute**
+   Help improve the plugin.
+
+=== Bug Reports
+
+When reporting bugs, include:
+
+1. **Minimal Reproduction**
+   ```nu
+   # Exact command that fails
+   "echo hello" | from posix
+   ```
+
+2. **Error Message**
+   Complete error output with stack trace.
+
+3. **Environment Info**
+   ```nu
+   version
+   $env.RUST_VERSION?
+   ```
+
+4. **Expected vs Actual**
+   What you expected vs what happened.
+
+== Conclusion
+
+This troubleshooting guide covers the most common issues encountered when using nu-posix. For issues not covered here, consider:
+
+1. Checking the latest documentation
+2. Searching existing GitHub issues
+3. Creating a new issue with detailed reproduction steps
+4. Consulting the Nushell community
+
+Remember that nu-posix is designed to handle the most common POSIX shell patterns. For complex or unusual constructs, manual conversion may be necessary.
+
+The key to successful troubleshooting is to:
+- Start with simple test cases
+- Verify each step of the conversion process
+- Use debug output to understand what's happening
+- Test converted code thoroughly before deployment
+
+Most issues can be resolved by following the systematic approach outlined in this chapter.

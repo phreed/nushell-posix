@@ -48,7 +48,7 @@ cmd = "cargo build --release"
 depends-on = ["full-clean"]
 
 [tasks.clean]
-cmd = "cargo clean"
+cmd = "cargo clean && rm -rf docs/output"
 depends-on = ["full-clean"]
 
 [tasks.register]
@@ -137,28 +137,85 @@ depends-on = ["release-build"]
 
 # Development helpers
 [tasks.full-clean]
-cmd = "cargo clean && rm -rf target"
+cmd = "cargo clean && rm -rf target && rm -rf docs/output"
 
 [tasks.docs]
 cmd = "cargo doc --open"
 depends-on = ["full-clean"]
 
-[tasks.build-book]
-cmd = "nu docs/build_book.nu"
-description = "Build the complete documentation book from AsciiDoc chapters"
+[tasks.build-guides]
+cmd = "nu docs/build_guides.nu"
+description = "Build developer and operator guides from AsciiDoc chapters"
 
-[tasks.build-book-html]
-cmd = "nu docs/build_book.nu && asciidoctor docs/nu-posix-book.adoc -o docs/nu-posix-book.html -a doctype=book"
-description = "Build the documentation book and generate HTML output"
+[tasks.build-guides-html]
+cmd = "nu docs/build_guides.nu"
+description = "Build developer and operator guides and generate HTML output"
 
-[tasks.view-book]
-cmd = "xdg-open docs/nu-posix-book.html || open docs/nu-posix-book.html"
-description = "Open the generated HTML book in the default browser"
-depends-on = ["build-book-html"]
+[tasks.build-guides-pdf]
+cmd = "nu docs/build_guides.nu"
+description = "Build developer and operator guides and generate PDF output"
+
+[tasks.view-guides]
+cmd = "xdg-open docs/output/developer-guide.html || open docs/output/developer-guide.html"
+description = "Open the generated HTML developer guide in the default browser"
+depends-on = ["build-guides-html"]
+
+[tasks.view-guides-pdf]
+cmd = "xdg-open docs/output/developer-guide.pdf || open docs/output/developer-guide.pdf"
+description = "Open the generated PDF developer guide in the default viewer"
+depends-on = ["build-guides-pdf"]
 
 [tasks.docs-all]
-depends-on = ["build-book", "docs"]
-description = "Build both the documentation book and API docs"
+depends-on = ["build-guides", "docs"]
+description = "Build both the documentation guides and API docs"
+
+[tasks.docs-all-pdf]
+depends-on = ["build-guides-pdf", "docs"]
+description = "Build both the documentation guides (with PDF) and API docs"
+
+[tasks.clean-guides]
+cmd = "nu docs/build_guides.nu --clean"
+description = "Clean the generated documentation output directory"
+
+[tasks.view-developer-guide]
+cmd = "xdg-open docs/output/developer-guide.html || open docs/output/developer-guide.html"
+description = "Open the developer guide in the default browser"
+depends-on = ["build-guides-html"]
+
+[tasks.view-operator-guide]
+cmd = "xdg-open docs/output/operator-guide.html || open docs/output/operator-guide.html"
+description = "Open the operator guide in the default browser"
+depends-on = ["build-guides-html"]
+
+[tasks.view-operator-guide-pdf]
+cmd = "xdg-open docs/output/operator-guide.pdf || open docs/output/operator-guide.pdf"
+description = "Open the operator guide PDF in the default viewer"
+depends-on = ["build-guides-pdf"]
+
+[tasks.view-developer-guide-pdf]
+cmd = "xdg-open docs/output/developer-guide.pdf || open docs/output/developer-guide.pdf"
+description = "Open the developer guide PDF in the default viewer"
+depends-on = ["build-guides-pdf"]
+
+[tasks.edit-developer-guide]
+cmd = "code docs/developer-guide.adoc || vim docs/developer-guide.adoc"
+description = "Edit the developer guide in your preferred editor"
+
+[tasks.edit-operator-guide]
+cmd = "code docs/operator-guide.adoc || vim docs/operator-guide.adoc"
+description = "Edit the operator guide in your preferred editor"
+
+[tasks.build-guides-html-only]
+cmd = "nu docs/build_guides.nu --html"
+description = "Build developer and operator guides (HTML only)"
+
+[tasks.build-guides-pdf-only]
+cmd = "nu docs/build_guides.nu --pdf"
+description = "Build developer and operator guides (PDF only)"
+
+[tasks.docs-help]
+cmd = "nu docs/build_guides.nu --help"
+description = "Show help for the documentation build system"
 
 [tasks.bench]
 cmd = "cargo bench"

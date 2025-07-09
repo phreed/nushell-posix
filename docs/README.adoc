@@ -1,0 +1,217 @@
+= nu-posix Documentation
+
+This directory contains the complete documentation for the nu-posix project, organized into specialized guides for different audiences.
+
+== Documentation Structure
+
+The documentation has been split into two main guides:
+
+=== 📖 Developer Guide
+**Target Audience**: Contributors, maintainers, and developers working with the nu-posix codebase
+
+**Location**: `developer-guide.adoc`
+
+**Contents**:
+- Technical architecture and implementation details
+- Parser integration and converter development
+- Testing frameworks and development workflows
+- Complete API reference and examples
+
+=== 🛠️ Operator Guide
+**Target Audience**: System administrators, DevOps engineers, and end users
+
+**Location**: `operator-guide.adoc`
+
+**Contents**:
+- Installation and configuration instructions
+- Command reference and usage patterns
+- Troubleshooting and best practices
+- Production deployment guidance
+
+=== 📚 Shared Content
+**Location**: `shared/` directory
+
+**Contents**:
+- Problem description and project context
+- Project status and roadmap
+- High-level architecture overview
+
+== File Organization
+
+----
+docs/
+├── README.adoc                         # This file
+├── developer-guide.adoc                # Complete developer guide
+├── operator-guide.adoc                 # Complete operator guide
+├── build_guides.nu                     # Build script for generating guides
+├── shared/                             # Shared content between guides
+│   ├── problem-description.adoc
+│   ├── project-status.adoc
+│   └── architecture-overview.adoc
+├── developer-guide/                    # Developer-specific chapters
+│   ├── parser-integration.adoc
+│   ├── converter-architecture.adoc
+│   ├── command-registry.adoc
+│   ├── builtin-converters.adoc
+│   ├── sus-converters.adoc
+│   ├── awk-converter.adoc
+│   ├── converter-verification.adoc
+│   ├── testing-framework.adoc
+│   ├── development-guide.adoc
+│   └── api-reference.adoc
+├── operator-guide/                     # Operator-specific chapters
+│   ├── command-reference.adoc
+│   └── troubleshooting.adoc
+└── output/                             # Generated documentation
+    ├── developer-guide.adoc
+    ├── developer-guide.html
+    ├── developer-guide.pdf
+    ├── operator-guide.adoc
+    ├── operator-guide.html
+    └── operator-guide.pdf
+----
+
+== Building Documentation
+
+=== Prerequisites
+
+- **Nushell**: Required for running the build script
+- **asciidoctor**: Optional, for HTML generation
+- **asciidoctor-pdf**: Optional, for PDF generation
+
+[source,bash]
+----
+# Install asciidoctor and asciidoctor-pdf (optional)
+gem install asciidoctor asciidoctor-pdf
+----
+
+=== Building the Guides
+
+Use the provided Nushell script to build both guides:
+
+[source,bash]
+----
+# Build both guides
+nu docs/build_guides.nu
+
+# Or run directly
+cd docs && nu build_guides.nu
+----
+
+This generates:
+- `output/developer-guide.adoc` - Complete developer guide
+- `output/operator-guide.adoc` - Complete operator guide
+- `output/developer-guide.html` - HTML version (if asciidoctor available)
+- `output/operator-guide.html` - HTML version (if asciidoctor available)
+- `output/developer-guide.pdf` - PDF version (if asciidoctor-pdf available)
+- `output/operator-guide.pdf` - PDF version (if asciidoctor-pdf available)
+
+=== Manual Building
+
+You can also build individual guides manually:
+
+[source,bash]
+----
+# Build developer guide (HTML)
+asciidoctor developer-guide.adoc -o output/developer-guide.html
+
+# Build operator guide (HTML)
+asciidoctor operator-guide.adoc -o output/operator-guide.html
+
+# Build developer guide (PDF)
+asciidoctor-pdf developer-guide.adoc -o output/developer-guide.pdf
+
+# Build operator guide (PDF)
+asciidoctor-pdf operator-guide.adoc -o output/operator-guide.pdf
+----
+
+== Content Guidelines
+
+=== Adding New Content
+
+1. **Determine Audience**: Decide whether content is for developers, operators, or both
+2. **Choose Location**:
+   - Developer-specific → `developer-guide/`
+   - Operator-specific → `operator-guide/`
+   - Shared content → `shared/`
+3. **Update Guides**: Add include statements to appropriate guide files
+4. **Rebuild**: Run `nu build_guides.nu` to regenerate output
+
+=== Shared Content Strategy
+
+Content in `shared/` should be:
+- **Foundational**: Essential understanding for both audiences
+- **Audience-Neutral**: Written for both technical and operational perspectives
+- **Stable**: Less likely to change frequently
+
+=== Writing Style
+
+==== Developer Guide
+- **Technical Depth**: Include implementation details, code examples, and architecture
+- **Assume Expertise**: Readers have programming and system design knowledge
+- **Focus on "How"**: Implementation details, development workflows, API usage
+
+==== Operator Guide
+- **Practical Focus**: Emphasize usage, configuration, and troubleshooting
+- **Step-by-Step**: Provide clear, actionable instructions
+- **Focus on "What"**: Commands, workflows, and operational procedures
+
+== Quick Start
+
+=== For Developers
+[source,bash]
+----
+# Read the developer guide
+open docs/developer-guide.adoc
+----
+
+=== For Operators
+[source,bash]
+----
+# Read the operator guide
+open docs/operator-guide.adoc
+----
+
+== Legacy Documentation
+
+The original unified book structure has been replaced with the specialized guides. All new content should be added to the appropriate specialized guide.
+
+== Contributing to Documentation
+
+=== Process
+1. **Identify Target Audience**: Determine if content is for developers, operators, or both
+2. **Choose Appropriate Guide**: Add content to the correct guide and directory
+3. **Follow Style Guidelines**: Match the tone and depth for the target audience
+4. **Test Build**: Ensure documentation builds correctly
+5. **Submit PR**: Include both source changes and rebuilt output
+
+=== Review Criteria
+- **Accuracy**: Content is technically correct and up-to-date
+- **Clarity**: Information is clear and well-organized
+- **Completeness**: All necessary information is included
+- **Audience Appropriate**: Content matches the target audience's needs
+
+== Maintenance
+
+=== Regular Tasks
+- **Content Updates**: Keep information current with code changes
+- **Link Validation**: Ensure all links work correctly
+- **Style Consistency**: Maintain consistent formatting and tone
+- **Build Verification**: Regularly test the build process
+
+=== Release Process
+1. **Update Content**: Reflect any changes in the new release
+2. **Rebuild Guides**: Generate fresh output files
+3. **Version Check**: Ensure version information is current
+4. **Quality Review**: Check for accuracy and completeness
+
+== Support
+
+For documentation issues:
+- **GitHub Issues**: Report problems or request improvements
+- **GitHub Discussions**: Ask questions about documentation
+- **Pull Requests**: Contribute improvements directly
+
+---
+
+_This documentation structure is designed to serve both technical contributors and operational users effectively. The separation allows each audience to focus on content relevant to their needs while maintaining shared foundational knowledge._

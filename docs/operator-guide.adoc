@@ -1,0 +1,456 @@
+= nu-posix Operator Guide
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:source-highlighter: rouge
+:icons: font
+
+== Overview
+
+This operator guide provides comprehensive documentation for using the nu-posix plugin effectively in production environments. It covers installation, configuration, usage patterns, command reference, and troubleshooting for system administrators, DevOps engineers, and end users.
+
+== Target Audience
+
+This guide is intended for:
+
+* **System Administrators**: Managing shell script migration and system automation
+* **DevOps Engineers**: Integrating nu-posix into CI/CD pipelines and deployment workflows
+* **End Users**: Converting existing POSIX scripts to Nushell for daily use
+* **Technical Operators**: Those responsible for maintaining and operating nu-posix in production
+
+== Prerequisites
+
+Before using this guide, you should have:
+
+* Basic familiarity with Nushell shell
+* Experience with POSIX shell scripting (bash, sh, zsh)
+* Understanding of system administration concepts
+* Access to systems where scripts need to be converted
+
+== Guide Structure
+
+This guide is organized into four main sections:
+
+=== Foundation (Chapters 1-3)
+Understanding why nu-posix exists, its current capabilities, and how it works at a high level.
+
+=== Installation & Setup
+Getting nu-posix installed and configured for your environment.
+
+=== Usage & Operations (Chapters 14-15)
+Practical guidance for using nu-posix commands and solving common problems.
+
+=== Best Practices
+Recommended workflows and patterns for successful script migration.
+
+== Quick Start for Operators
+
+=== Installation
+
+1. **Install Nushell** (if not already installed):
+   ```bash
+   # Using package manager (Ubuntu/Debian)
+   sudo apt install nushell
+
+   # Using Cargo
+   cargo install nu
+
+   # Using Homebrew (macOS)
+   brew install nushell
+   ```
+
+2. **Install nu-posix plugin**:
+   ```bash
+   # Build from source
+   git clone https://github.com/nushell/nu-posix.git
+   cd nu-posix
+   cargo build --release
+
+   # Register with Nushell
+   nu -c "plugin add target/release/nu-posix"
+   nu -c "plugin use nu-posix"
+   ```
+
+3. **Verify installation**:
+   ```nu
+   # Test basic conversion
+   "echo hello world" | from posix
+
+   # Should output: echo hello world
+   ```
+
+=== Basic Usage
+
+```nu
+# Convert simple POSIX command
+"ls -la" | from posix
+
+# Convert pipeline
+"cat file.txt | grep pattern" | from posix
+
+# Convert complex script
+open script.sh | from posix | save converted_script.nu
+
+# Parse script to see AST
+"echo hello" | parse posix
+```
+
+=== Common Use Cases
+
+1. **DevOps Script Migration**:
+   ```nu
+   # Convert build script
+   open build.sh | from posix | save build.nu
+
+   # Convert deployment script
+   open deploy.sh | from posix | save deploy.nu
+   ```
+
+2. **System Administration**:
+   ```nu
+   # Convert maintenance scripts
+   ls /scripts/*.sh | each { |file|
+       open $file | from posix | save ($file | str replace .sh .nu)
+   }
+   ```
+
+3. **Interactive Conversion**:
+   ```nu
+   # Convert command interactively
+   "find . -name '*.txt' -exec cat {} \;" | from posix
+   ```
+
+== Chapter Contents
+
+include::shared/problem-description.adoc[]
+
+include::shared/project-status.adoc[]
+
+include::shared/architecture-overview.adoc[]
+
+include::operator-guide/command-reference.adoc[]
+
+include::operator-guide/troubleshooting.adoc[]
+
+== Installation Guide
+
+=== System Requirements
+
+* **Operating System**: Linux, macOS, Windows (WSL)
+* **Nushell Version**: 0.80.0 or later
+* **Rust Toolchain**: 1.70.0 or later (for building from source)
+* **Memory**: 512MB RAM minimum, 1GB recommended
+* **Storage**: 100MB for plugin and dependencies
+
+=== Installation Methods
+
+==== Method 1: From Source (Recommended)
+
+```bash
+# Clone repository
+git clone https://github.com/nushell/nu-posix.git
+cd nu-posix
+
+# Build release version
+cargo build --release
+
+# Register with Nushell
+nu -c "plugin add target/release/nu-posix"
+nu -c "plugin use nu-posix"
+```
+
+==== Method 2: Using Cargo
+
+```bash
+# Install directly from crates.io (when available)
+cargo install nu-posix
+
+# Register with Nushell
+nu -c "plugin add ~/.cargo/bin/nu-posix"
+nu -c "plugin use nu-posix"
+```
+
+==== Method 3: Package Managers
+
+```bash
+# Ubuntu/Debian (when available)
+sudo apt install nu-posix
+
+# macOS with Homebrew (when available)
+brew install nu-posix
+
+# Arch Linux (when available)
+yay -S nu-posix
+```
+
+=== Verification
+
+After installation, verify everything works:
+
+```nu
+# Check plugin is loaded
+plugin list | where name == "nu-posix"
+
+# Test basic functionality
+"echo test" | from posix
+
+# Test parsing
+"ls -la" | parse posix
+
+# Check version
+version | get nu-posix
+```
+
+== Configuration
+
+=== Plugin Configuration
+
+nu-posix can be configured through environment variables:
+
+```bash
+# Enable verbose logging
+export RUST_LOG=nu_posix=debug
+
+# Configure parser preferences
+export NU_POSIX_PREFER_YASH=true
+export NU_POSIX_STRICT_POSIX=false
+```
+
+=== Nushell Configuration
+
+Add to your Nushell config file (`$nu.config-path`):
+
+```nu
+# Auto-load nu-posix plugin
+plugin use nu-posix
+
+# Create aliases for common operations
+alias posix-convert = from posix
+alias posix-parse = parse posix
+alias posix-to-nu = from posix
+```
+
+== Usage Patterns
+
+=== Script Migration Workflow
+
+1. **Assessment Phase**:
+   ```nu
+   # Analyze existing scripts
+   ls scripts/*.sh | each { |file|
+       {
+           file: $file,
+           lines: (open $file | lines | length),
+           complexity: (open $file | parse posix | get commands | length)
+       }
+   }
+   ```
+
+2. **Conversion Phase**:
+   ```nu
+   # Convert scripts with verification
+   ls scripts/*.sh | each { |file|
+       let converted = (open $file | from posix)
+       $converted | save ($file | str replace .sh .nu)
+
+       # Verify conversion
+       try {
+           nu -c $converted
+           {file: $file, status: "success"}
+       } catch {
+           {file: $file, status: "failed", error: $in}
+       }
+   }
+   ```
+
+3. **Testing Phase**:
+   ```nu
+   # Test converted scripts
+   ls scripts/*.nu | each { |file|
+       print $"Testing ($file)..."
+       nu -c $"source ($file); main"
+   }
+   ```
+
+=== Batch Processing
+
+```nu
+# Convert multiple files
+def convert-scripts [directory: string] {
+    ls $"($directory)/*.sh" | each { |file|
+        let output = ($file.name | str replace .sh .nu)
+        open $file.name | from posix | save $output
+        print $"Converted ($file.name) -> ($output)"
+    }
+}
+
+# Usage
+convert-scripts "scripts"
+```
+
+=== Pipeline Integration
+
+```nu
+# Integration with existing Nushell workflows
+open scripts.json
+| get scripts
+| each { |script|
+    $script.content | from posix
+}
+| save converted-scripts.nu
+```
+
+== Best Practices
+
+=== Script Conversion
+
+1. **Start Simple**: Begin with basic scripts before tackling complex ones
+2. **Test Thoroughly**: Always test converted scripts before deployment
+3. **Incremental Migration**: Convert scripts gradually, not all at once
+4. **Backup Originals**: Keep original POSIX scripts as reference
+5. **Document Changes**: Note any manual adjustments needed
+
+=== Performance Optimization
+
+1. **Batch Operations**: Convert multiple files together when possible
+2. **Memory Management**: For large scripts, consider splitting into smaller chunks
+3. **Caching**: Cache frequently converted patterns
+4. **Parallel Processing**: Use Nushell's parallel processing for large batches
+
+=== Error Handling
+
+1. **Graceful Degradation**: Handle conversion failures gracefully
+2. **Logging**: Enable appropriate logging levels for debugging
+3. **Validation**: Verify converted scripts work as expected
+4. **Rollback Plan**: Have a plan to revert if conversion fails
+
+== Production Deployment
+
+=== CI/CD Integration
+
+```yaml
+# Example GitHub Actions workflow
+name: Convert Scripts
+on: [push]
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Nushell
+      run: cargo install nu
+    - name: Install nu-posix
+      run: |
+        git clone https://github.com/nushell/nu-posix.git
+        cd nu-posix
+        cargo build --release
+        nu -c "plugin add target/release/nu-posix"
+    - name: Convert scripts
+      run: |
+        nu -c "
+          ls scripts/*.sh | each { |file|
+            open $file | from posix | save ($file | str replace .sh .nu)
+          }
+        "
+```
+
+=== Docker Integration
+
+```dockerfile
+# Dockerfile for nu-posix
+FROM rust:1.70 as builder
+
+WORKDIR /app
+COPY . .
+RUN cargo build --release
+
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y nushell
+COPY --from=builder /app/target/release/nu-posix /usr/local/bin/
+RUN nu -c "plugin add /usr/local/bin/nu-posix"
+
+ENTRYPOINT ["nu"]
+```
+
+=== Monitoring and Maintenance
+
+1. **Performance Monitoring**: Track conversion speed and success rates
+2. **Error Tracking**: Monitor conversion failures and common issues
+3. **Updates**: Keep nu-posix updated with latest improvements
+4. **Documentation**: Maintain documentation of conversion patterns
+
+== Security Considerations
+
+=== Input Validation
+
+* Always validate POSIX scripts before conversion
+* Be cautious with scripts from untrusted sources
+* Use sandboxed environments for testing converted scripts
+
+=== Output Verification
+
+* Verify converted scripts don't introduce security vulnerabilities
+* Check for unintended command modifications
+* Validate file permissions and access patterns
+
+=== Environment Security
+
+* Use appropriate file permissions for converted scripts
+* Secure plugin installation and updates
+* Monitor for unusual conversion patterns
+
+== Migration Strategies
+
+=== Gradual Migration
+
+1. **Phase 1**: Convert non-critical utility scripts
+2. **Phase 2**: Convert automation scripts with thorough testing
+3. **Phase 3**: Convert critical system scripts with rollback plans
+4. **Phase 4**: Full migration with monitoring
+
+=== Parallel Operation
+
+* Run both POSIX and Nushell versions during transition
+* Compare outputs to ensure consistency
+* Gradually phase out POSIX versions
+
+=== Training and Adoption
+
+* Train team members on Nushell and nu-posix
+* Provide conversion guidelines and best practices
+* Create internal documentation for common patterns
+
+== Performance Tuning
+
+=== Optimization Techniques
+
+```nu
+# Use efficient patterns
+$scripts | par-each { |script| $script | from posix } # Parallel processing
+
+# Cache common conversions
+const converted_patterns = {
+    "ls -la": "ls -la",
+    "cat file": "open file",
+    # ... other patterns
+}
+```
+
+=== Resource Management
+
+* Monitor memory usage during large batch conversions
+* Use appropriate timeouts for complex scripts
+* Implement progress tracking for long-running operations
+
+== Conclusion
+
+This operator guide provides the practical knowledge needed to successfully deploy and use nu-posix in production environments. The combination of comprehensive command reference, troubleshooting guidance, and best practices enables effective script migration and operation.
+
+For additional support, refer to the project documentation, community forums, or contact the development team through the project's GitHub repository.
+
+The nu-posix plugin represents a significant step forward in shell script modernization, enabling organizations to leverage Nushell's powerful capabilities while preserving their existing script investments.
+
+---
+
+*This guide is maintained by the nu-posix team and updated with each release. For the latest version, visit the project repository.*

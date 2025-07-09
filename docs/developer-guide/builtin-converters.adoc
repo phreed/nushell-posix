@@ -1,0 +1,696 @@
+[[chapter-7]]
+= Chapter 7: Builtin Converters
+
+Builtin converters handle the core shell builtin commands that are fundamental to POSIX shell operation. These commands are typically implemented directly in the shell rather than as external programs, and they have the highest priority in the command registry.
+
+== Overview
+
+The nu-posix plugin implements converters for 9 essential builtin commands that cover the most common shell operations:
+
+1. `echo` - Display text
+2. `cd` - Change directory
+3. `test`/`[` - Test conditions
+4. `pwd` - Print working directory
+5. `exit` - Exit the shell
+6. `export` - Set environment variables
+7. `unset` - Remove variables
+8. `alias` - Create command aliases
+9. `source`/`.` - Execute script files
+
+== Architecture
+
+All builtin converters implement the `CommandConverter` trait and are registered with the highest priority in the command registry:
+
+```rust
+pub trait CommandConverter: Send + Sync {
+    fn convert(&self, command: &PosixCommand) -> Result<String>;
+    fn get_command_name(&self) -> &str;
+    fn supports_flags(&self) -> Vec<&str>;
+    fn get_description(&self) -> &str;
+}
+```
+
+== Echo Converter
+
+The echo converter handles the `echo` builtin command, which displays text to stdout.
+
+=== POSIX Usage
+```bash
+echo "Hello World"
+echo -n "No newline"
+echo -e "Line 1\nLine 2"
+```
+
+=== Nushell Equivalent
+```nu
+print "Hello World"
+print -n "No newline"
+print "Line 1\nLine 2"
+```
+
+=== Implementation
+```rust
+pub struct EchoConverter;
+
+impl CommandConverter for EchoConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        if let PosixCommand::Simple(cmd) = command {
+            let mut result = String::from("print");
+
+            // Handle flags
+            let mut no_newline = false;
+            let mut interpret_escapes = false;
+            let mut args = Vec::new();
+
+            for arg in &cmd.args {
+                match arg.as_str() {
+                    "-n" => no_newline = true,
+                    "-e" => interpret_escapes = true,
+                    _ => args.push(arg.clone()),
+                }
+            }
+
+            if no_newline {
+                result.push_str(" -n");
+            }
+
+            // Join arguments with spaces
+            if !args.is_empty() {
+                result.push_str(" \"");
+                result.push_str(&args.join(" "));
+                result.push_str("\"");
+            }
+
+            Ok(result)
+        } else {
+            Err(anyhow::anyhow!("Invalid command type for echo"))
+        }
+    }
+
+    fn get_command_name(&self) -> &str {
+        "echo"
+    }
+
+    fn supports_flags(&self) -> Vec<&str> {
+        vec!["-n", "-e"]
+    }
+
+    fn get_description(&self) -> &str {
+        "Display text to stdout"
+    }
+}
+```
+
+== CD Converter
+
+The cd converter handles directory changes.
+
+=== POSIX Usage
+```bash
+cd /path/to/directory
+cd ..
+cd ~
+cd -
+```
+
+=== Nushell Equivalent
+```nu
+cd /path/to/directory
+cd ..
+cd ~
+cd -
+```
+
+=== Implementation
+```rust
+pub struct CdConverter;
+
+impl CommandConverter for CdConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        if let PosixCommand::Simple(cmd) = command {
+            let mut result = String::from("cd");
+
+            if let Some(path) = cmd.args.first() {
+                result.push_str(" ");
+                result.push_str(path);
+            }
+
+            Ok(result)
+        } else {
+            Err(anyhow::anyhow!("Invalid command type for cd"))
+        }
+    }
+
+    fn get_command_name(&self) -> &str {
+        "cd"
+    }
+
+    fn supports_flags(&self) -> Vec<&str> {
+        vec![]
+    }
+
+    fn get_description(&self) -> &str {
+        "Change current directory"
+    }
+}
+```
+
+== Test Converter
+
+The test converter handles conditional testing, supporting both `test` and `[` commands.
+
+=== POSIX Usage
+```bash
+test -f file.txt
+[ -d directory ]
+test "$var" = "value"
+[ $? -eq 0 ]
+```
+
+=== Nushell Equivalent
+```nu
+("file.txt" | path exists) and ("file.txt" | path type) == "file"
+"directory" | path exists and ("directory" | path type) == "dir"
+$var == "value"
+$env.LAST_EXIT_CODE == 0
+```
+
+=== Implementation
+```rust
+pub struct TestConverter;
+
+impl CommandConverter for TestConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        if let PosixCommand::Simple(cmd) = command {
+            let args = &cmd.args;
+
+            if args.is_empty() {
+                return Ok("false".to_string());
+            }
+
+            // Handle single argument (test for non-empty string)
+            if args.len() == 1 {
+                return Ok(format!("not ({} | is-empty)", args[0]));
+            }
+
+            // Handle file tests
+            if args.len() == 2 {
+                match args[0].as_str() {
+                    "-f" => return Ok(format!("({} | path exists) and (({} | path type) == \"file\")", args[1], args[1])),
+                    "-d" => return Ok(format!("({} | path exists) and (({} | path type) == \"dir\")", args[1], args[1])),
+                    "-e" => return Ok(format!("{} | path exists", args[1])),
+                    "-r" => return Ok(format!("{} | path exists", args[1])), // Simplified
+                    "-w" => return Ok(format!("{} | path exists", args[1])), // Simplified
+                    "-x" => return Ok(format!("{} | path exists", args[1])), // Simplified
+                    "-s" => return Ok(format!("({} | path exists) and (({} | path type) == \"file\") and (({} | path expand | path metadata | get size) > 0)", args[1], args[1], args[1])),
+                    _ => {}
+                }
+            }
+
+            // Handle three-argument comparisons
+            if args.len() == 3 {
+                let left = &args[0];
+                let op = &args[1];
+                let right = &args[2];
+
+                match op.as_str() {
+                    "=" | "==" => return Ok(format!("{} == {}", left, right)),
+                    "!=" => return Ok(format!("{} != {}", left, right)),
+                    "-eq" => return Ok(format!("({} | into int) == ({} | into int)", left, right)),
+                    "-ne" => return Ok(format!("({} | into int) != ({} | into int)", left, right)),
+                    "-lt" => return Ok(format!("({} | into int) < ({} | into int)", left, right)),
+                    "-le" => return Ok(format!("({} | into int) <= ({} | into int)", left, right)),
+                    "-gt" => return Ok(format!("({} | into int) > ({} | into int)", left, right)),
+                    "-ge" => return Ok(format!("({} | into int) >= ({} | into int)", left, right)),
+                    _ => {}
+                }
+            }
+
+            // Fallback for complex expressions
+            Ok(format!("# Complex test expression: {}", args.join(" ")))
+        } else {
+            Err(anyhow::anyhow!("Invalid command type for test"))
+        }
+    }
+
+    fn get_command_name(&self) -> &str {
+        "test"
+    }
+
+    fn supports_flags(&self) -> Vec<&str> {
+        vec!["-f", "-d", "-e", "-r", "-w", "-x", "-s", "-eq", "-ne", "-lt", "-le", "-gt", "-ge"]
+    }
+
+    fn get_description(&self) -> &str {
+        "Test file attributes and compare values"
+    }
+}
+```
+
+== PWD Converter
+
+The pwd converter prints the current working directory.
+
+=== POSIX Usage
+```bash
+pwd
+pwd -L
+pwd -P
+```
+
+=== Nushell Equivalent
+```nu
+pwd
+pwd
+pwd
+```
+
+=== Implementation
+```rust
+pub struct PwdConverter;
+
+impl CommandConverter for PwdConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        if let PosixCommand::Simple(_) = command {
+            Ok("pwd".to_string())
+        } else {
+            Err(anyhow::anyhow!("Invalid command type for pwd"))
+        }
+    }
+
+    fn get_command_name(&self) -> &str {
+        "pwd"
+    }
+
+    fn supports_flags(&self) -> Vec<&str> {
+        vec!["-L", "-P"]
+    }
+
+    fn get_description(&self) -> &str {
+        "Print current working directory"
+    }
+}
+```
+
+== Exit Converter
+
+The exit converter handles shell exit with optional exit codes.
+
+=== POSIX Usage
+```bash
+exit
+exit 0
+exit 1
+exit $?
+```
+
+=== Nushell Equivalent
+```nu
+exit
+exit 0
+exit 1
+exit $env.LAST_EXIT_CODE
+```
+
+=== Implementation
+```rust
+pub struct ExitConverter;
+
+impl CommandConverter for ExitConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        if let PosixCommand::Simple(cmd) = command {
+            let mut result = String::from("exit");
+
+            if let Some(code) = cmd.args.first() {
+                result.push_str(" ");
+                if code == "$?" {
+                    result.push_str("$env.LAST_EXIT_CODE");
+                } else {
+                    result.push_str(code);
+                }
+            }
+
+            Ok(result)
+        } else {
+            Err(anyhow::anyhow!("Invalid command type for exit"))
+        }
+    }
+
+    fn get_command_name(&self) -> &str {
+        "exit"
+    }
+
+    fn supports_flags(&self) -> Vec<&str> {
+        vec![]
+    }
+
+    fn get_description(&self) -> &str {
+        "Exit the shell with optional exit code"
+    }
+}
+```
+
+== Export Converter
+
+The export converter handles environment variable exports.
+
+=== POSIX Usage
+```bash
+export VAR=value
+export VAR
+export -n VAR
+```
+
+=== Nushell Equivalent
+```nu
+$env.VAR = "value"
+$env.VAR = $VAR
+# No direct equivalent for export -n
+```
+
+=== Implementation
+```rust
+pub struct ExportConverter;
+
+impl CommandConverter for ExportConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        if let PosixCommand::Simple(cmd) = command {
+            if cmd.args.is_empty() {
+                return Ok("$env | table".to_string());
+            }
+
+            let mut results = Vec::new();
+
+            for arg in &cmd.args {
+                if arg == "-n" {
+                    // Handle unexport (not directly supported)
+                    results.push("# export -n not directly supported in Nu".to_string());
+                    continue;
+                }
+
+                if arg.contains('=') {
+                    let parts: Vec<&str> = arg.splitn(2, '=').collect();
+                    if parts.len() == 2 {
+                        let var = parts[0];
+                        let value = parts[1];
+                        results.push(format!("$env.{} = \"{}\"", var, value));
+                    }
+                } else {
+                    // Export existing variable
+                    results.push(format!("$env.{} = ${}", arg, arg));
+                }
+            }
+
+            Ok(results.join("; "))
+        } else {
+            Err(anyhow::anyhow!("Invalid command type for export"))
+        }
+    }
+
+    fn get_command_name(&self) -> &str {
+        "export"
+    }
+
+    fn supports_flags(&self) -> Vec<&str> {
+        vec!["-n"]
+    }
+
+    fn get_description(&self) -> &str {
+        "Set environment variables"
+    }
+}
+```
+
+== Unset Converter
+
+The unset converter removes variables and environment variables.
+
+=== POSIX Usage
+```bash
+unset VAR
+unset -v VAR
+unset -f function_name
+```
+
+=== Nushell Equivalent
+```nu
+# No direct equivalent for unsetting variables
+hide VAR
+# Function removal not directly supported
+```
+
+=== Implementation
+```rust
+pub struct UnsetConverter;
+
+impl CommandConverter for UnsetConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        if let PosixCommand::Simple(cmd) = command {
+            if cmd.args.is_empty() {
+                return Err(anyhow::anyhow!("unset: missing operand"));
+            }
+
+            let mut results = Vec::new();
+            let mut function_mode = false;
+
+            for arg in &cmd.args {
+                match arg.as_str() {
+                    "-f" => function_mode = true,
+                    "-v" => function_mode = false,
+                    _ => {
+                        if function_mode {
+                            results.push(format!("# Cannot unset function '{}' in Nu", arg));
+                        } else {
+                            results.push(format!("hide {}", arg));
+                        }
+                    }
+                }
+            }
+
+            Ok(results.join("; "))
+        } else {
+            Err(anyhow::anyhow!("Invalid command type for unset"))
+        }
+    }
+
+    fn get_command_name(&self) -> &str {
+        "unset"
+    }
+
+    fn supports_flags(&self) -> Vec<&str> {
+        vec!["-f", "-v"]
+    }
+
+    fn get_description(&self) -> &str {
+        "Remove variables and functions"
+    }
+}
+```
+
+== Alias Converter
+
+The alias converter handles command aliases.
+
+=== POSIX Usage
+```bash
+alias ll='ls -l'
+alias
+alias name
+```
+
+=== Nushell Equivalent
+```nu
+alias ll = ls -l
+alias
+# No direct equivalent for querying specific alias
+```
+
+=== Implementation
+```rust
+pub struct AliasConverter;
+
+impl CommandConverter for AliasConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        if let PosixCommand::Simple(cmd) = command {
+            if cmd.args.is_empty() {
+                return Ok("alias".to_string());
+            }
+
+            let mut results = Vec::new();
+
+            for arg in &cmd.args {
+                if arg.contains('=') {
+                    let parts: Vec<&str> = arg.splitn(2, '=').collect();
+                    if parts.len() == 2 {
+                        let name = parts[0];
+                        let value = parts[1].trim_matches('\'').trim_matches('"');
+                        results.push(format!("alias {} = {}", name, value));
+                    }
+                } else {
+                    results.push(format!("# Query alias '{}' not directly supported", arg));
+                }
+            }
+
+            Ok(results.join("; "))
+        } else {
+            Err(anyhow::anyhow!("Invalid command type for alias"))
+        }
+    }
+
+    fn get_command_name(&self) -> &str {
+        "alias"
+    }
+
+    fn supports_flags(&self) -> Vec<&str> {
+        vec![]
+    }
+
+    fn get_description(&self) -> &str {
+        "Create command aliases"
+    }
+}
+```
+
+== Source Converter
+
+The source converter handles script execution.
+
+=== POSIX Usage
+```bash
+source script.sh
+. script.sh
+```
+
+=== Nushell Equivalent
+```nu
+source script.nu
+source script.nu
+```
+
+=== Implementation
+```rust
+pub struct SourceConverter;
+
+impl CommandConverter for SourceConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        if let PosixCommand::Simple(cmd) = command {
+            if cmd.args.is_empty() {
+                return Err(anyhow::anyhow!("source: missing filename"));
+            }
+
+            let filename = &cmd.args[0];
+            Ok(format!("source {}", filename))
+        } else {
+            Err(anyhow::anyhow!("Invalid command type for source"))
+        }
+    }
+
+    fn get_command_name(&self) -> &str {
+        "source"
+    }
+
+    fn supports_flags(&self) -> Vec<&str> {
+        vec![]
+    }
+
+    fn get_description(&self) -> &str {
+        "Execute script file"
+    }
+}
+```
+
+== Registration
+
+All builtin converters are registered during plugin initialization:
+
+```rust
+impl CommandRegistry {
+    pub fn register_builtins(&mut self) {
+        self.register_builtin("echo", Box::new(EchoConverter));
+        self.register_builtin("cd", Box::new(CdConverter));
+        self.register_builtin("test", Box::new(TestConverter));
+        self.register_builtin("[", Box::new(TestConverter)); // Same as test
+        self.register_builtin("pwd", Box::new(PwdConverter));
+        self.register_builtin("exit", Box::new(ExitConverter));
+        self.register_builtin("export", Box::new(ExportConverter));
+        self.register_builtin("unset", Box::new(UnsetConverter));
+        self.register_builtin("alias", Box::new(AliasConverter));
+        self.register_builtin("source", Box::new(SourceConverter));
+        self.register_builtin(".", Box::new(SourceConverter)); // Same as source
+    }
+}
+```
+
+== Testing
+
+Each builtin converter includes comprehensive tests:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_echo_converter() {
+        let converter = EchoConverter;
+        let cmd = create_simple_command("echo", vec!["hello", "world"]);
+        let result = converter.convert(&cmd).unwrap();
+        assert_eq!(result, "print \"hello world\"");
+    }
+
+    #[test]
+    fn test_echo_no_newline() {
+        let converter = EchoConverter;
+        let cmd = create_simple_command("echo", vec!["-n", "hello"]);
+        let result = converter.convert(&cmd).unwrap();
+        assert_eq!(result, "print -n \"hello\"");
+    }
+
+    #[test]
+    fn test_cd_converter() {
+        let converter = CdConverter;
+        let cmd = create_simple_command("cd", vec!["/home/user"]);
+        let result = converter.convert(&cmd).unwrap();
+        assert_eq!(result, "cd /home/user");
+    }
+
+    #[test]
+    fn test_test_file_exists() {
+        let converter = TestConverter;
+        let cmd = create_simple_command("test", vec!["-f", "file.txt"]);
+        let result = converter.convert(&cmd).unwrap();
+        assert!(result.contains("path exists"));
+        assert!(result.contains("path type"));
+    }
+}
+```
+
+== Limitations
+
+Some builtin features have limitations in Nushell:
+
+1. **Complex Test Expressions**: Very complex test expressions may not convert perfectly
+2. **Unset Variables**: Nu doesn't have direct variable unsetting
+3. **Alias Queries**: Cannot query specific aliases in Nu
+4. **Export -n**: Nu doesn't support unexporting variables
+5. **Function Unset**: Nu doesn't support function removal via unset
+
+== Best Practices
+
+1. **Error Handling**: Always provide meaningful error messages
+2. **Flag Support**: Document all supported flags
+3. **Fallback**: Provide comments for unsupported features
+4. **Testing**: Include comprehensive test coverage
+5. **Documentation**: Keep converter descriptions up to date
+
+== Summary
+
+Builtin converters provide essential shell functionality with:
+
+- **High Priority**: Registered first in the command registry
+- **Core Features**: Essential shell operations (echo, cd, test, etc.)
+- **Robust Implementation**: Comprehensive error handling and testing
+- **Nushell Integration**: Proper mapping to Nu equivalents
+- **Extensible Design**: Easy to add new builtin converters
+
+These converters form the foundation of POSIX shell compatibility in nu-posix, ensuring that the most commonly used shell commands work seamlessly in the Nushell environment.
