@@ -11,14 +11,16 @@ The nu-posix plugin implements the standard Nushell plugin interface with the fo
 
 Converts POSIX shell scripts to Nushell syntax.
 
-```nu
+[source,nu]
+----
 "echo hello" | from posix
-```
+----
 
 ==== Signature
-```nu
+[source,nu]
+----
 from posix: string -> string
-```
+----
 
 ==== Parameters
 - `input`: POSIX shell script as string
@@ -27,7 +29,8 @@ from posix: string -> string
 - Converted Nushell script as string
 
 ==== Examples
-```nu
+[source,nu]
+----
 # Simple command conversion
 "ls -la" | from posix
 # Output: ls -la
@@ -39,50 +42,24 @@ from posix: string -> string
 # Complex script conversion
 "for i in 1 2 3; do echo $i; done" | from posix
 # Output: for i in [1 2 3] { print $i }
-```
+----
 
-=== to posix
 
-Converts Nushell scripts to POSIX shell syntax (basic implementation).
-
-```nu
-"ls | where size > 1KB" | to posix
-```
-
-==== Signature
-```nu
-to posix: string -> string
-```
-
-==== Parameters
-- `input`: Nushell script as string
-
-==== Returns
-- Converted POSIX shell script as string
-
-==== Examples
-```nu
-# Simple command conversion
-"print hello" | to posix
-# Output: echo hello
-
-# Basic pipeline conversion
-"ls | length" | to posix
-# Output: ls | wc -l
-```
 
 === parse posix
 
 Parses POSIX shell scripts and returns the Abstract Syntax Tree (AST).
 
-```nu
+[source,nu]
+----
 "echo hello" | parse posix
-```
+----
 
 ==== Signature
-```nu
+[source,nu]
+----
 parse posix: string -> record
-```
+----
 
 ==== Parameters
 - `input`: POSIX shell script as string
@@ -91,7 +68,8 @@ parse posix: string -> record
 - AST representation as Nushell record
 
 ==== Examples
-```nu
+[source,nu]
+----
 # Parse simple command
 "echo hello" | parse posix
 # Output: { type: "script", commands: [{ type: "simple", name: "echo", args: ["hello"] }] }
@@ -99,7 +77,7 @@ parse posix: string -> record
 # Parse compound command
 "if test -f file; then echo exists; fi" | parse posix
 # Output: { type: "script", commands: [{ type: "compound", kind: "if", ... }] }
-```
+----
 
 == Core Data Structures
 
@@ -107,72 +85,79 @@ parse posix: string -> record
 
 Represents a complete POSIX shell script.
 
-```rust
+[source,rust]
+----
 #[derive(Debug, Clone)]
 pub struct PosixScript {
     pub commands: Vec<PosixCommand>,
 }
-```
+----
 
 ==== Fields
 - `commands`: Vector of POSIX commands in the script
 
 ==== Methods
-```rust
+[source,rust]
+----
 impl PosixScript {
     pub fn new() -> Self
     pub fn add_command(&mut self, command: PosixCommand)
     pub fn is_empty(&self) -> bool
     pub fn len(&self) -> usize
 }
-```
+----
 
 === PosixCommand
 
 Represents a single POSIX command, which can be simple or compound.
 
-```rust
+[source,rust]
+----
 #[derive(Debug, Clone)]
 pub enum PosixCommand {
-    Simple(SimpleCommandData),
-    Compound(CompoundCommandData),
-    Pipeline(PipelineData),
+    Simple(SimpleCommand),
+    Compound(CompoundCommand),
+    Pipeline(Pipeline),
 }
-```
+----
 
 ==== Variants
 
 ===== Simple Command
-```rust
-pub struct SimpleCommandData {
+[source,rust]
+----
+#[derive(Debug, Clone)]
+pub struct SimpleCommand {
     pub name: String,
     pub args: Vec<String>,
-    pub assignments: Vec<Assignment>,
     pub redirections: Vec<Redirection>,
 }
-```
+----
 
 ===== Compound Command
-```rust
+[source,rust]
+----
 pub struct CompoundCommandData {
     pub kind: CompoundCommandKind,
     pub redirections: Vec<Redirection>,
 }
-```
+----
 
 ===== Pipeline
-```rust
+[source,rust]
+----
 pub struct PipelineData {
     pub commands: Vec<PosixCommand>,
     pub background: bool,
 }
-```
+----
 
 === CompoundCommandKind
 
 Enumerates different types of compound commands.
 
-```rust
+[source,rust]
+----
 #[derive(Debug, Clone)]
 pub enum CompoundCommandKind {
     BraceGroup(Vec<PosixCommand>),
@@ -204,7 +189,7 @@ pub enum CompoundCommandKind {
         expression: String,
     },
 }
-```
+----
 
 ==== Variant Details
 
@@ -234,13 +219,14 @@ pub enum CompoundCommandKind {
 
 Represents variable assignment.
 
-```rust
+[source,rust]
+----
 #[derive(Debug, Clone)]
 pub struct Assignment {
     pub name: String,
     pub value: String,
 }
-```
+----
 
 ==== Fields
 - `name`: Variable name
@@ -250,14 +236,15 @@ pub struct Assignment {
 
 Represents input/output redirection.
 
-```rust
+[source,rust]
+----
 #[derive(Debug, Clone)]
 pub struct Redirection {
     pub kind: RedirectionKind,
     pub target: String,
     pub fd: Option<i32>,
 }
-```
+----
 
 ==== Fields
 - `kind`: Type of redirection
@@ -268,7 +255,8 @@ pub struct Redirection {
 
 Enumerates different types of redirection.
 
-```rust
+[source,rust]
+----
 #[derive(Debug, Clone)]
 pub enum RedirectionKind {
     Input,          // <
@@ -280,7 +268,7 @@ pub enum RedirectionKind {
     HereDoc,        // <<
     HereString,     // <<<
 }
-```
+----
 
 == Parser API
 
@@ -288,9 +276,10 @@ pub enum RedirectionKind {
 
 Main parsing function that converts POSIX shell script to AST.
 
-```rust
+[source,rust]
+----
 pub fn parse_posix_script(input: &str) -> Result<PosixScript, ParseError>
-```
+----
 
 ==== Parameters
 - `input`: POSIX shell script as string reference
@@ -299,21 +288,23 @@ pub fn parse_posix_script(input: &str) -> Result<PosixScript, ParseError>
 - `Result<PosixScript, ParseError>`: Parsed AST or error
 
 ==== Examples
-```rust
+[source,rust]
+----
 use nu_posix::parse_posix_script;
 
 let script = "echo hello; ls -la";
 let ast = parse_posix_script(script)?;
 println!("Parsed {} commands", ast.commands.len());
-```
+----
 
 === parse_with_yash_syntax
 
 Advanced parsing using yash-syntax library (when available).
 
-```rust
+[source,rust]
+----
 pub fn parse_with_yash_syntax(input: &str) -> Result<PosixScript, ParseError>
-```
+----
 
 ==== Parameters
 - `input`: POSIX shell script as string reference
@@ -331,9 +322,10 @@ pub fn parse_with_yash_syntax(input: &str) -> Result<PosixScript, ParseError>
 
 Fallback parser using heuristic approach.
 
-```rust
+[source,rust]
+----
 pub fn parse_with_heuristic_parser(input: &str) -> Result<PosixScript, ParseError>
-```
+----
 
 ==== Parameters
 - `input`: POSIX shell script as string reference
@@ -353,14 +345,15 @@ pub fn parse_with_heuristic_parser(input: &str) -> Result<PosixScript, ParseErro
 
 Interface for implementing command converters.
 
-```rust
+[source,rust]
+----
 pub trait CommandConverter: Send + Sync {
     fn convert(&self, command: &PosixCommand) -> Result<String, ConversionError>;
     fn get_command_name(&self) -> &str;
     fn supports_flags(&self) -> Vec<&str>;
     fn get_description(&self) -> &str;
 }
-```
+----
 
 ==== Methods
 
@@ -395,9 +388,10 @@ Returns human-readable description of the converter.
 
 Main conversion function that transforms POSIX AST to Nushell code.
 
-```rust
+[source,rust]
+----
 pub fn convert_posix_to_nu(script: &PosixScript) -> Result<String, ConversionError>
-```
+----
 
 ==== Parameters
 - `script`: POSIX AST to convert
@@ -406,14 +400,15 @@ pub fn convert_posix_to_nu(script: &PosixScript) -> Result<String, ConversionErr
 - `Result<String, ConversionError>`: Converted Nushell code or error
 
 ==== Examples
-```rust
+[source,rust]
+----
 use nu_posix::{parse_posix_script, convert_posix_to_nu};
 
 let script = "echo hello | grep h";
 let ast = parse_posix_script(script)?;
 let nu_code = convert_posix_to_nu(&ast)?;
 println!("Converted: {}", nu_code);
-```
+----
 
 == Registry API
 
@@ -421,55 +416,62 @@ println!("Converted: {}", nu_code);
 
 Central registry for managing command converters.
 
-```rust
+[source,rust]
+----
 pub struct CommandRegistry {
     // Private fields
 }
-```
+----
 
 ==== Methods
 
 ===== new
 Creates a new command registry with default converters.
 
-```rust
+[source,rust]
+----
 pub fn new() -> Self
-```
+----
 
 ===== register_builtin
 Registers a builtin command converter.
 
-```rust
+[source,rust]
+----
 pub fn register_builtin(&mut self, name: &str, converter: Box<dyn CommandConverter>)
-```
+----
 
 ===== register_sus
 Registers a SUS utility converter.
 
-```rust
+[source,rust]
+----
 pub fn register_sus(&mut self, name: &str, converter: Box<dyn CommandConverter>)
-```
+----
 
 ===== register_external
 Registers an external command converter.
 
-```rust
+[source,rust]
+----
 pub fn register_external(&mut self, name: &str, converter: Box<dyn CommandConverter>)
-```
+----
 
 ===== convert_command
 Converts a single command using the appropriate converter.
 
-```rust
+[source,rust]
+----
 pub fn convert_command(&self, command: &PosixCommand) -> Result<String, ConversionError>
-```
+----
 
 ===== list_registered_commands
 Returns list of all registered commands.
 
-```rust
+[source,rust]
+----
 pub fn list_registered_commands(&self) -> Vec<String>
-```
+----
 
 == Error Types
 
@@ -477,28 +479,30 @@ pub fn list_registered_commands(&self) -> Vec<String>
 
 Error type for parsing operations.
 
-```rust
+[source,rust]
+----
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
     #[error("Invalid syntax: {0}")]
     InvalidSyntax(String),
 
-    #[error("Unsupported feature: {0}")]
-    UnsupportedFeature(String),
+    #[error("Unexpected token: {0}")]
+    UnexpectedToken(String),
 
-    #[error("Parser error: {0}")]
-    ParserError(String),
+    #[error("Incomplete command")]
+    IncompleteCommand,
 
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 }
-```
+----
 
 === ConversionError
 
 Error type for conversion operations.
 
-```rust
+[source,rust]
+----
 #[derive(Debug, thiserror::Error)]
 pub enum ConversionError {
     #[error("Command not found: {0}")]
@@ -513,7 +517,7 @@ pub enum ConversionError {
     #[error("Unsupported feature: {0}")]
     UnsupportedFeature(String),
 }
-```
+----
 
 == Plugin Configuration
 
@@ -521,7 +525,8 @@ pub enum ConversionError {
 
 Configuration options for the plugin.
 
-```rust
+[source,rust]
+----
 #[derive(Debug, Clone)]
 pub struct PluginConfig {
     pub enable_yash_syntax: bool,
@@ -529,7 +534,7 @@ pub struct PluginConfig {
     pub preserve_comments: bool,
     pub verbose_errors: bool,
 }
-```
+----
 
 ==== Fields
 - `enable_yash_syntax`: Use yash-syntax parser when available
@@ -538,13 +543,14 @@ pub struct PluginConfig {
 - `verbose_errors`: Include detailed error information
 
 ==== Methods
-```rust
+[source,rust]
+----
 impl PluginConfig {
     pub fn default() -> Self
     pub fn strict() -> Self
     pub fn permissive() -> Self
 }
-```
+----
 
 == Utility Functions
 
@@ -552,9 +558,10 @@ impl PluginConfig {
 
 Checks if a string contains POSIX shell syntax.
 
-```rust
+[source,rust]
+----
 pub fn is_posix_script(input: &str) -> bool
-```
+----
 
 ==== Parameters
 - `input`: String to check
@@ -566,9 +573,10 @@ pub fn is_posix_script(input: &str) -> bool
 
 Formats Nushell code for better readability.
 
-```rust
+[source,rust]
+----
 pub fn format_nu_code(code: &str) -> String
-```
+----
 
 ==== Parameters
 - `code`: Nushell code to format
@@ -580,9 +588,10 @@ pub fn format_nu_code(code: &str) -> String
 
 Validates that a conversion is syntactically correct.
 
-```rust
+[source,rust]
+----
 pub fn validate_conversion(nu_code: &str) -> Result<(), ValidationError>
-```
+----
 
 ==== Parameters
 - `nu_code`: Converted Nushell code
@@ -596,9 +605,10 @@ pub fn validate_conversion(nu_code: &str) -> Result<(), ValidationError>
 
 Creates a test command for unit testing.
 
-```rust
+[source,rust]
+----
 pub fn create_test_command(name: &str, args: Vec<&str>) -> PosixCommand
-```
+----
 
 ==== Parameters
 - `name`: Command name
@@ -611,9 +621,10 @@ pub fn create_test_command(name: &str, args: Vec<&str>) -> PosixCommand
 
 Asserts that a POSIX command converts to expected Nushell code.
 
-```rust
+[source,rust]
+----
 pub fn assert_conversion(posix: &str, expected_nu: &str) -> Result<(), AssertionError>
-```
+----
 
 ==== Parameters
 - `posix`: POSIX shell command
@@ -626,7 +637,8 @@ pub fn assert_conversion(posix: &str, expected_nu: &str) -> Result<(), Assertion
 
 === Basic Usage
 
-```rust
+[source,rust]
+----
 use nu_posix::*;
 
 // Parse POSIX script
@@ -636,11 +648,12 @@ let ast = parse_posix_script(script)?;
 // Convert to Nushell
 let nu_code = convert_posix_to_nu(&ast)?;
 println!("Converted: {}", nu_code);
-```
+----
 
 === Custom Converter
 
-```rust
+[source,rust]
+----
 use nu_posix::*;
 
 struct MyConverter;
@@ -662,11 +675,12 @@ impl CommandConverter for MyConverter {
 // Register custom converter
 let mut registry = CommandRegistry::new();
 registry.register_external("my-command", Box::new(MyConverter));
-```
+----
 
 === Advanced Parsing
 
-```rust
+[source,rust]
+----
 use nu_posix::*;
 
 // Configure parser
@@ -691,32 +705,31 @@ let script = r#"
 let ast = parse_posix_script(script)?;
 let nu_code = convert_posix_to_nu(&ast)?;
 println!("Converted script:\n{}", nu_code);
-```
+----
 
 == Integration with Nushell
 
 === Plugin Registration
 
-```nu
+[source,nu]
+----
 # Register the plugin
 plugin add target/release/nu-posix
 
 # Use the plugin
 plugin use nu-posix
-```
+----
 
 === Command Usage
 
-```nu
+[source,nu]
+----
 # Convert POSIX to Nushell
 "ls -la | grep txt" | from posix
 
 # Parse POSIX script
 "echo hello" | parse posix
-
-# Convert Nushell to POSIX (basic)
-"ls | length" | to posix
-```
+----
 
 == Performance Considerations
 

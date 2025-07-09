@@ -10,12 +10,14 @@ This chapter provides a comprehensive reference for all commands supported by th
 Converts POSIX shell scripts to Nushell syntax.
 
 ==== Syntax
-```nu
+[source,nu]
+----
 <string> | from posix
-```
+----
 
 ==== Examples
-```nu
+[source,nu]
+----
 # Simple command
 "echo hello" | from posix
 # Output: print "hello"
@@ -27,39 +29,23 @@ Converts POSIX shell scripts to Nushell syntax.
 # Complex script
 "for i in 1 2 3; do echo $i; done" | from posix
 # Output: for i in [1 2 3] { print $i }
-```
+----
 
-=== to posix
 
-Converts Nushell scripts to POSIX shell syntax (basic implementation).
-
-==== Syntax
-```nu
-<string> | to posix
-```
-
-==== Examples
-```nu
-# Simple command
-"print hello" | to posix
-# Output: echo hello
-
-# Basic pipeline
-"ls | length" | to posix
-# Output: ls | wc -l
-```
 
 === parse posix
 
 Parses POSIX shell scripts and returns the AST structure.
 
 ==== Syntax
-```nu
+[source,nu]
+----
 <string> | parse posix
-```
+----
 
 ==== Examples
-```nu
+[source,nu]
+----
 # Simple command
 "echo hello" | parse posix
 # Output: { commands: [{ type: "simple", name: "echo", args: ["hello"] }] }
@@ -67,7 +53,7 @@ Parses POSIX shell scripts and returns the AST structure.
 # Compound command
 "if test -f file; then echo exists; fi" | parse posix
 # Output: { commands: [{ type: "compound", kind: "if", ... }] }
-```
+----
 
 == Builtin Commands
 
@@ -76,18 +62,20 @@ Parses POSIX shell scripts and returns the AST structure.
 Displays text to stdout.
 
 ==== POSIX Syntax
-```bash
+[source,bash]
+----
 echo [options] [string...]
-```
+----
 
 ==== Supported Options
 - `-n`: Do not output trailing newline
 - `-e`: Enable interpretation of backslash escapes
 
 ==== Nushell Conversion
-```nu
+[source,nu]
+----
 print [options] [string...]
-```
+----
 
 ==== Examples
 ```nu

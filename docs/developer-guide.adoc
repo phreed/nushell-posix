@@ -6,8 +6,13 @@
 :source-highlighter: rouge
 :icons: font
 
-[discrete]
-== Guide Structure
+== Overview
+
+This developer guide provides comprehensive technical documentation for contributing to and extending the nu-posix project. It covers the internal architecture, development workflows, testing frameworks, and API references needed to work with the codebase effectively.
+
+== Introduction
+
+=== Guide Structure
 
 This guide is organized into three main sections:
 
@@ -23,11 +28,7 @@ Deep dive into the technical implementation details of parsers, converters, and 
 Practical guidance for testing, development workflows, and API usage.
 (<<converter-verification>>, <<testing-framework>>, <<development-guide>>, <<api-reference>>)
 
-== Overview
-
-This developer guide provides comprehensive technical documentation for contributing to and extending the nu-posix project. It covers the internal architecture, development workflows, testing frameworks, and API references needed to work with the codebase effectively.
-
-== Target Audience
+=== Target Audience
 
 This guide is intended for:
 
@@ -36,7 +37,7 @@ This guide is intended for:
 * **Library Users**: Developers integrating nu-posix into other projects
 * **Technical Maintainers**: Those responsible for project maintenance and releases
 
-== Prerequisites
+=== Prerequisites
 
 Before using this guide, you should have:
 
@@ -46,32 +47,49 @@ Before using this guide, you should have:
 * Knowledge of parsing and AST concepts
 * Basic understanding of compiler design principles
 
+== Claim
+
+The nu-posix project addresses the critical need for automated POSIX shell script conversion to Nushell.
+By providing a comprehensive, accurate, and usable conversion system,
+it enables organizations and individuals to leverage Nushell's modern capabilities
+while preserving their existing script investments.
+
+The following chapters detail the architecture, implementation, and usage of the nu-posix system,
+providing both high-level understanding and practical guidance for effective script migration.
+
 == Quick Start for Developers
 
 === Environment Setup
 
 1. **Install Rust toolchain**:
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   rustup component add rustfmt clippy
-   ```
++
+[source,bash]
+----
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup component add rustfmt clippy
+----
 
 2. **Clone and build**:
-   ```bash
-   git clone https://github.com/nushell/nu-posix.git
-   cd nu-posix
-   cargo build --release
-   ```
++
+[source,bash]
+----
+git clone https://github.com/nushell/nu-posix.git
+cd nu-posix
+cargo build --release
+----
 
 3. **Run tests**:
-   ```bash
-   cargo test
-   cargo clippy
-   ```
++
+[source,bash]
+----
+cargo test
+cargo clippy
+----
 
 === Key Development Commands
 
-```bash
+[source,bash]
+----
 # Watch for changes during development
 cargo watch -x test
 
@@ -86,35 +104,31 @@ cargo fmt
 
 # Run performance benchmarks
 cargo bench
-```
+----
 
-== Chapter Contents
+include::shared/problem-description.adoc[leveloffset=+1]
 
-include::shared/problem-description.adoc[]
+include::shared/project-status.adoc[leveloffset=+1]
 
-include::shared/project-status.adoc[]
+include::shared/architecture-overview.adoc[leveloffset=+1]
 
-include::shared/architecture-overview.adoc[]
+include::developer-guide/parser-integration.adoc[leveloffset=+1]
 
-include::developer-guide/parser-integration.adoc[]
+include::developer-guide/command-registry.adoc[leveloffset=+1]
 
-include::developer-guide/converter-architecture.adoc[]
+include::developer-guide/builtin-converters.adoc[leveloffset=+1]
 
-include::developer-guide/command-registry.adoc[]
+include::developer-guide/sus-converters.adoc[leveloffset=+1]
 
-include::developer-guide/builtin-converters.adoc[]
+include::developer-guide/awk-converter.adoc[leveloffset=+1]
 
-include::developer-guide/sus-converters.adoc[]
+include::developer-guide/converter-verification.adoc[leveloffset=+1]
 
-include::developer-guide/awk-converter.adoc[]
+include::developer-guide/testing-framework.adoc[leveloffset=+1]
 
-include::developer-guide/converter-verification.adoc[]
+include::developer-guide/development-guide.adoc[leveloffset=+1]
 
-include::developer-guide/testing-framework.adoc[]
-
-include::developer-guide/development-guide.adoc[]
-
-include::developer-guide/api-reference.adoc[]
+include::developer-guide/api-reference.adoc[leveloffset=+1]
 
 == Development Resources
 

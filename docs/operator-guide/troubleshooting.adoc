@@ -10,87 +10,108 @@ This chapter provides comprehensive troubleshooting guidance for common issues e
 === Plugin Registration Problems
 
 ==== Symptom
-```
+[source,text]
+----
 Error: Plugin not found: nu-posix
-```
+----
 
 ==== Solutions
 
 1. **Verify Plugin Build**
-   ```bash
-   cargo build --release
-   ls -la target/release/nu-posix
-   ```
++
+[source,bash]
+----
+cargo build --release
+ls -la target/release/nu-posix
+----
 
 2. **Check Plugin Registration**
-   ```nu
-   plugin list | where name =~ "nu-posix"
-   ```
++
+[source,nu]
+----
+plugin list | where name =~ "nu-posix"
+----
 
 3. **Re-register Plugin**
-   ```nu
-   plugin rm nu-posix
-   plugin add target/release/nu-posix
-   plugin use nu-posix
-   ```
++
+[source,nu]
+----
+plugin rm nu-posix
+plugin add target/release/nu-posix
+plugin use nu-posix
+----
 
 ==== Symptom
-```
+[source,text]
+----
 Error: Plugin failed to load
-```
+----
 
 ==== Solutions
 
 1. **Check Nushell Version Compatibility**
-   ```nu
-   version
-   ```
-   Ensure you're using Nushell 0.105 or compatible version.
++
+[source,nu]
+----
+version
+----
++
+Ensure you're using Nushell 0.105 or compatible version.
 
 2. **Verify Plugin Dependencies**
-   ```bash
-   ldd target/release/nu-posix  # Linux
-   otool -L target/release/nu-posix  # macOS
-   ```
++
+[source,bash]
+----
+ldd target/release/nu-posix  # Linux
+otool -L target/release/nu-posix  # macOS
+----
 
 3. **Rebuild Plugin**
-   ```bash
-   cargo clean
-   cargo build --release
-   ```
++
+[source,bash]
+----
+cargo clean
+cargo build --release
+----
 
 === Compilation Errors
 
 ==== Symptom
-```
+[source,text]
+----
 error: failed to compile nu-posix
-```
+----
 
 ==== Solutions
 
 1. **Update Rust Toolchain**
-   ```bash
-   rustup update
-   rustup default stable
-   ```
++
+[source,bash]
+----
+rustup update
+rustup default stable
+----
 
 2. **Check Cargo.toml Dependencies**
    Ensure all dependencies are compatible and up-to-date.
 
 3. **Clear Cargo Cache**
-   ```bash
-   cargo clean
-   rm -rf ~/.cargo/registry/cache
-   ```
++
+[source,bash]
+----
+cargo clean
+rm -rf ~/.cargo/registry/cache
+----
 
 == Conversion Errors
 
 === Parse Errors
 
 ==== Symptom
-```
+[source,text]
+----
 Error: Parse error: unexpected token
-```
+----
 
 ==== Common Causes and Solutions
 

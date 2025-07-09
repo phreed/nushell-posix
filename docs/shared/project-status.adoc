@@ -48,7 +48,7 @@ nu-posix/
 
 ==== Plugin Architecture
 - Nushell plugin structure using `nu-plugin` crate
-- Three main commands: `from posix`, `to posix`, `parse posix`
+- Two main commands: `from posix`, `parse posix`
 - Compatible with Nushell 0.105+
 
 ==== POSIX Parser
@@ -158,13 +158,6 @@ Converts POSIX shell script to Nushell syntax.
 * Flags: `--pretty`, `--file`
 * Input: String (POSIX script)
 * Output: String (Nushell script)
-
-=== `to posix`
-
-Converts Nushell syntax to POSIX shell script (basic implementation).
-
-* Input: String (Nushell script)
-* Output: String (POSIX script)
 
 === `parse posix`
 

@@ -21,35 +21,39 @@ The nu-posix plugin implements converters for 9 essential builtin commands that 
 
 All builtin converters implement the `CommandConverter` trait and are registered with the highest priority in the command registry:
 
-```rust
+[source,rust]
+----
 pub trait CommandConverter: Send + Sync {
     fn convert(&self, command: &PosixCommand) -> Result<String>;
     fn get_command_name(&self) -> &str;
     fn supports_flags(&self) -> Vec<&str>;
     fn get_description(&self) -> &str;
 }
-```
+----
 
 == Echo Converter
 
 The echo converter handles the `echo` builtin command, which displays text to stdout.
 
 === POSIX Usage
-```bash
+[source,bash]
+----
 echo "Hello World"
 echo -n "No newline"
 echo -e "Line 1\nLine 2"
-```
+----
 
 === Nushell Equivalent
-```nu
+[source,nu]
+----
 print "Hello World"
 print -n "No newline"
 print "Line 1\nLine 2"
-```
+----
 
 === Implementation
-```rust
+[source,rust]
+----
 pub struct EchoConverter;
 
 impl CommandConverter for EchoConverter {
@@ -99,30 +103,33 @@ impl CommandConverter for EchoConverter {
         "Display text to stdout"
     }
 }
-```
+----
 
 == CD Converter
 
 The cd converter handles directory changes.
 
 === POSIX Usage
-```bash
+[source,bash]
+----
 cd /path/to/directory
 cd ..
 cd ~
 cd -
-```
+----
 
 === Nushell Equivalent
-```nu
+[source,nu]
+----
 cd /path/to/directory
 cd ..
 cd ~
 cd -
-```
+----
 
 === Implementation
-```rust
+[source,rust]
+----
 pub struct CdConverter;
 
 impl CommandConverter for CdConverter {
@@ -153,30 +160,33 @@ impl CommandConverter for CdConverter {
         "Change current directory"
     }
 }
-```
+----
 
 == Test Converter
 
 The test converter handles conditional testing, supporting both `test` and `[` commands.
 
 === POSIX Usage
-```bash
+[source,bash]
+----
 test -f file.txt
 [ -d directory ]
 test "$var" = "value"
 [ $? -eq 0 ]
-```
+----
 
 === Nushell Equivalent
-```nu
+[source,nu]
+----
 ("file.txt" | path exists) and ("file.txt" | path type) == "file"
 "directory" | path exists and ("directory" | path type) == "dir"
 $var == "value"
 $env.LAST_EXIT_CODE == 0
-```
+----
 
 === Implementation
-```rust
+[source,rust]
+----
 pub struct TestConverter;
 
 impl CommandConverter for TestConverter {
@@ -245,28 +255,31 @@ impl CommandConverter for TestConverter {
         "Test file attributes and compare values"
     }
 }
-```
+----
 
 == PWD Converter
 
 The pwd converter prints the current working directory.
 
 === POSIX Usage
-```bash
+[source,bash]
+----
 pwd
 pwd -L
 pwd -P
-```
+----
 
 === Nushell Equivalent
-```nu
+[source,nu]
+----
 pwd
 pwd
-pwd
-```
+$env.PWD
+----
 
 === Implementation
-```rust
+[source,rust]
+----
 pub struct PwdConverter;
 
 impl CommandConverter for PwdConverter {
@@ -290,30 +303,31 @@ impl CommandConverter for PwdConverter {
         "Print current working directory"
     }
 }
-```
+----
 
 == Exit Converter
 
 The exit converter handles shell exit with optional exit codes.
 
 === POSIX Usage
-```bash
+[source,bash]
+----
 exit
 exit 0
 exit 1
-exit $?
-```
+----
 
 === Nushell Equivalent
-```nu
+[source,nu]
+----
 exit
 exit 0
 exit 1
-exit $env.LAST_EXIT_CODE
-```
+----
 
 === Implementation
-```rust
+[source,rust]
+----
 pub struct ExitConverter;
 
 impl CommandConverter for ExitConverter {
@@ -348,28 +362,31 @@ impl CommandConverter for ExitConverter {
         "Exit the shell with optional exit code"
     }
 }
-```
+----
 
 == Export Converter
 
 The export converter handles environment variable exports.
 
 === POSIX Usage
-```bash
+[source,bash]
+----
 export VAR=value
 export VAR
 export -n VAR
-```
+----
 
 === Nushell Equivalent
-```nu
+[source,nu]
+----
 $env.VAR = "value"
 $env.VAR = $VAR
 # No direct equivalent for export -n
-```
+----
 
 === Implementation
-```rust
+[source,rust]
+----
 pub struct ExportConverter;
 
 impl CommandConverter for ExportConverter {
@@ -384,19 +401,15 @@ impl CommandConverter for ExportConverter {
             for arg in &cmd.args {
                 if arg == "-n" {
                     // Handle unexport (not directly supported)
-                    results.push("# export -n not directly supported in Nu".to_string());
                     continue;
                 }
 
                 if arg.contains('=') {
                     let parts: Vec<&str> = arg.splitn(2, '=').collect();
                     if parts.len() == 2 {
-                        let var = parts[0];
-                        let value = parts[1];
-                        results.push(format!("$env.{} = \"{}\"", var, value));
+                        results.push(format!("$env.{} = \"{}\"", parts[0], parts[1]));
                     }
                 } else {
-                    // Export existing variable
                     results.push(format!("$env.{} = ${}", arg, arg));
                 }
             }
@@ -419,7 +432,7 @@ impl CommandConverter for ExportConverter {
         "Set environment variables"
     }
 }
-```
+----
 
 == Unset Converter
 
@@ -440,8 +453,9 @@ hide VAR
 ```
 
 === Implementation
-```rust
-pub struct UnsetConverter;
+[source,rust]
+----
+pub struct TrueConverter;
 
 impl CommandConverter for UnsetConverter {
     fn convert(&self, command: &PosixCommand) -> Result<String> {
@@ -485,7 +499,7 @@ impl CommandConverter for UnsetConverter {
         "Remove variables and functions"
     }
 }
-```
+----
 
 == Alias Converter
 
@@ -506,8 +520,9 @@ alias
 ```
 
 === Implementation
-```rust
-pub struct AliasConverter;
+[source,rust]
+----
+pub struct FalseConverter;
 
 impl CommandConverter for AliasConverter {
     fn convert(&self, command: &PosixCommand) -> Result<String> {
@@ -549,7 +564,7 @@ impl CommandConverter for AliasConverter {
         "Create command aliases"
     }
 }
-```
+----
 
 == Source Converter
 
@@ -568,8 +583,9 @@ source script.nu
 ```
 
 === Implementation
-```rust
-pub struct SourceConverter;
+[source,rust]
+----
+pub struct JobsConverter;
 
 impl CommandConverter for SourceConverter {
     fn convert(&self, command: &PosixCommand) -> Result<String> {
@@ -597,7 +613,7 @@ impl CommandConverter for SourceConverter {
         "Execute script file"
     }
 }
-```
+----
 
 == Registration
 
@@ -619,13 +635,14 @@ impl CommandRegistry {
         self.register_builtin(".", Box::new(SourceConverter)); // Same as source
     }
 }
-```
+----
 
 == Testing
 
 Each builtin converter includes comprehensive tests:
 
-```rust
+[source,rust]
+----
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -663,7 +680,7 @@ mod tests {
         assert!(result.contains("path type"));
     }
 }
-```
+----
 
 == Limitations
 

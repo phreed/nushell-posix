@@ -6,8 +6,13 @@
 :source-highlighter: rouge
 :icons: font
 
-[discrete]
-== Guide Structure
+== Overview
+
+This operator guide provides comprehensive documentation for using the nu-posix plugin effectively in production environments. It covers installation, configuration, usage patterns, command reference, and troubleshooting for system administrators, DevOps engineers, and end users.
+
+== Introduction
+
+=== Guide Structure
 
 This guide is organized into four main sections:
 
@@ -25,11 +30,7 @@ Practical guidance for using nu-posix commands and solving common problems.
 **Best Practices**::
 Recommended workflows and patterns for successful script migration.
 
-== Overview
-
-This operator guide provides comprehensive documentation for using the nu-posix plugin effectively in production environments. It covers installation, configuration, usage patterns, command reference, and troubleshooting for system administrators, DevOps engineers, and end users.
-
-== Target Audience
+=== Target Audience
 
 This guide is intended for:
 
@@ -38,7 +39,7 @@ This guide is intended for:
 * **End Users**: Converting existing POSIX scripts to Nushell for daily use
 * **Technical Operators**: Those responsible for maintaining and operating nu-posix in production
 
-== Prerequisites
+=== Prerequisites
 
 Before using this guide, you should have:
 
@@ -124,17 +125,13 @@ open script.sh | from posix | save converted_script.nu
    "find . -name '*.txt' -exec cat {} \;" | from posix
    ```
 
-== Chapter Contents
+include::shared/problem-description.adoc[leveloffset=+1]
 
-include::shared/problem-description.adoc[]
+include::shared/project-status.adoc[leveloffset=+1]
 
-include::shared/project-status.adoc[]
+include::operator-guide/command-reference.adoc[leveloffset=+1]
 
-include::shared/architecture-overview.adoc[]
-
-include::operator-guide/command-reference.adoc[]
-
-include::operator-guide/troubleshooting.adoc[]
+include::operator-guide/troubleshooting.adoc[leveloffset=+1]
 
 == Installation Guide
 

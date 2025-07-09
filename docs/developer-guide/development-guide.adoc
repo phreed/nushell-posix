@@ -10,22 +10,28 @@ This chapter provides comprehensive guidance for developing and extending the nu
 Before starting development on nu-posix, ensure you have the following tools installed:
 
 1. **Rust Toolchain**:
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   rustup update stable
-   rustup component add rustfmt clippy
-   ```
++
+[source,bash]
+----
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup update stable
+rustup component add rustfmt clippy
+----
 
 2. **Nushell**:
-   ```bash
-   cargo install nu
-   ```
++
+[source,bash]
+----
+cargo install nu
+----
 
 3. **Development Tools**:
-   ```bash
-   cargo install cargo-watch
-   cargo install cargo-expand
-   ```
++
+[source,bash]
+----
+cargo install cargo-watch
+cargo install cargo-expand
+----
 
 === Project Structure
 
@@ -316,66 +322,78 @@ mod integration_tests {
 ==== Adding New Converters
 
 1. **Create Converter Module**:
-   ```rust
-   pub struct NewConverter;
++
+[source,rust]
+----
+pub struct NewConverter;
 
-   impl CommandConverter for NewConverter {
-       fn convert(&self, command: &PosixCommand) -> Result<String> {
-           // Implementation
-       }
+impl CommandConverter for NewConverter {
+    fn convert(&self, command: &PosixCommand) -> Result<String> {
+        // Implementation
+    }
 
-       fn get_command_name(&self) -> &str { "new_command" }
-       fn supports_flags(&self) -> Vec<&str> { vec![] }
-       fn get_description(&self) -> &str { "Description" }
-   }
-   ```
+    fn get_command_name(&self) -> &str { "new_command" }
+    fn supports_flags(&self) -> Vec<&str> { vec![] }
+    fn get_description(&self) -> &str { "Description" }
+}
+----
 
 2. **Register Converter**:
-   ```rust
-   impl CommandRegistry {
-       pub fn register_converters(&mut self) {
-           self.register_sus("new_command", Box::new(NewConverter));
-       }
-   }
-   ```
++
+[source,rust]
+----
+impl CommandRegistry {
+    pub fn register_converters(&mut self) {
+        self.register_sus("new_command", Box::new(NewConverter));
+    }
+}
+----
 
 3. **Add Tests**:
-   ```rust
-   #[test]
-   fn test_new_converter() {
-       let converter = NewConverter;
-       let cmd = create_simple_command("new_command", vec!["arg1"]);
-       let result = converter.convert(&cmd).unwrap();
-       assert_eq!(result, "expected_output");
-   }
-   ```
++
+[source,rust]
+----
+#[test]
+fn test_new_converter() {
+    let converter = NewConverter;
+    let cmd = create_simple_command("new_command", vec!["arg1"]);
+    let result = converter.convert(&cmd).unwrap();
+    assert_eq!(result, "expected_output");
+}
+----
 
 ==== Extending Parser Support
 
 1. **Add New AST Node Types**:
-   ```rust
-   #[derive(Debug, Clone)]
-   pub enum NewCommandType {
-       CustomCommand {
-           name: String,
-           args: Vec<String>,
-       },
-   }
-   ```
++
+[source,rust]
+----
+#[derive(Debug, Clone)]
+pub enum NewCommandType {
+    CustomCommand {
+        name: String,
+        args: Vec<String>,
+    },
+}
+----
 
 2. **Update Parser**:
-   ```rust
-   fn parse_custom_command(input: &str) -> Result<NewCommandType> {
-       // Implementation
-   }
-   ```
++
+[source,rust]
+----
+fn parse_custom_command(input: &str) -> Result<NewCommandType> {
+    // Implementation
+}
+----
 
 3. **Add Conversion Logic**:
-   ```rust
-   fn convert_custom_command(cmd: &NewCommandType) -> Result<String> {
-       // Implementation
-   }
-   ```
++
+[source,rust]
+----
+fn convert_custom_command(cmd: &NewCommandType) -> Result<String> {
+    // Implementation
+}
+----
 
 === Performance Optimization
 
@@ -451,15 +469,19 @@ cargo test --doc
 ==== Pull Request Process
 
 1. **Fork and Clone**:
-   ```bash
-   git clone https://github.com/yourusername/nu-posix.git
-   cd nu-posix
-   ```
++
+[source,bash]
+----
+git clone https://github.com/yourusername/nu-posix.git
+cd nu-posix
+----
 
 2. **Create Feature Branch**:
-   ```bash
-   git checkout -b feature/new-converter
-   ```
++
+[source,bash]
+----
+git checkout -b feature/new-converter
+----
 
 3. **Make Changes**:
    - Follow existing code style
@@ -467,11 +489,13 @@ cargo test --doc
    - Update documentation
 
 4. **Test Changes**:
-   ```bash
-   cargo test
-   cargo clippy
-   cargo fmt -- --check
-   ```
++
+[source,bash]
+----
+cargo test
+cargo clippy
+cargo fmt -- --check
+----
 
 5. **Submit PR**:
    - Clear description of changes

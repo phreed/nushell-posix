@@ -38,21 +38,20 @@ Multiple layers of error handling and validation ensure robust operation:
 
 === High-Level Overview
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Nu-POSIX Plugin                      │
-├─────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │   Parser    │  │  Converter  │  │   Output    │     │
-│  │   Layer     │→ │    Layer    │→ │   Layer     │     │
-│  └─────────────┘  └─────────────┘  └─────────────┘     │
-│         │                 │                             │
-│  ┌─────────────┐  ┌─────────────┐                      │
-│  │    AST      │  │  Registry   │                      │
-│  │ Generation  │  │   System    │                      │
-│  └─────────────┘  └─────────────┘                      │
-└─────────────────────────────────────────────────────────┘
-```
+[mermaid]
+....
+graph TB
+    subgraph "Nu-POSIX Plugin"
+        Parser["Parser<br/>Layer"] --> Converter["Converter<br/>Layer"]
+        Converter --> Output["Output<br/>Layer"]
+
+        AST["AST<br/>Generation"]
+        Registry["Registry<br/>System"]
+
+        Parser --> AST
+        Converter --> Registry
+    end
+....
 
 === Component Interaction
 
@@ -324,13 +323,7 @@ Converts POSIX shell scripts to Nushell syntax:
 * **Output**: String (Nushell code)
 * **Flags**: `--pretty`, `--file`
 
-==== to posix
 
-Converts Nushell syntax to POSIX shell scripts:
-
-* **Input**: String (Nushell code)
-* **Output**: String (POSIX script)
-* **Flags**: Basic implementation
 
 ==== parse posix
 
