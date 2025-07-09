@@ -23,7 +23,8 @@ impl CommandConverter for UniqConverter {
         let mut skip_fields = String::new();
         let mut skip_chars = String::new();
         let mut output_file = String::new();
-        let mut input_file = String::new();
+        // TODO: input_file variable assignment is overwritten before being read
+        let mut _input_file = String::new();
         let mut files = Vec::new();
 
         let mut i = 0;
@@ -70,13 +71,13 @@ impl CommandConverter for UniqConverter {
         // Handle input files
         if !files.is_empty() {
             if files.len() == 1 {
-                input_file = files[0].clone();
-                result.push_str(&format!("open {} | ", base.quote_arg(&input_file)));
+                _input_file = files[0].clone();
+                result.push_str(&format!("open {} | ", base.quote_arg(&_input_file)));
             } else if files.len() == 2 {
                 // First file is input, second is output
-                input_file = files[0].clone();
+                _input_file = files[0].clone();
                 output_file = files[1].clone();
-                result.push_str(&format!("open {} | ", base.quote_arg(&input_file)));
+                result.push_str(&format!("open {} | ", base.quote_arg(&_input_file)));
             } else {
                 // Multiple input files
                 result.push_str(&format!("open {} | ", base.format_args(&files)));

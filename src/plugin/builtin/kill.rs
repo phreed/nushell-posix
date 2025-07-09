@@ -10,7 +10,8 @@ pub struct KillBuiltinConverter;
 
 impl BuiltinConverter for KillBuiltinConverter {
     fn convert(&self, args: &[String]) -> Result<String> {
-        let base = BaseBuiltinConverter;
+        // TODO: base variable is not used in current implementation
+        let _base = BaseBuiltinConverter;
 
         if args.is_empty() {
             return Ok("kill".to_string());

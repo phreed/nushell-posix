@@ -24,7 +24,8 @@ impl CommandConverter for GrepConverter {
         let mut ignore_case = false;
         let mut count = false;
         let mut line_number = false;
-        let mut extended_regex = false;
+        // TODO: extended_regex variable is not used in current implementation
+        let mut _extended_regex = false;
         let mut fixed_string = false;
         let mut word_match = false;
         let mut only_matching = false;
@@ -53,7 +54,7 @@ impl CommandConverter for GrepConverter {
                     i += 1;
                 }
                 "-E" | "--extended-regexp" => {
-                    extended_regex = true;
+                    _extended_regex = true;
                     i += 1;
                 }
                 "-F" | "--fixed-strings" => {

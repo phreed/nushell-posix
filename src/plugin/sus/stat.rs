@@ -19,9 +19,12 @@ impl CommandConverter for StatConverter {
         // Parse stat arguments
         let mut files = Vec::new();
         let mut format = String::new();
-        let mut printf_format = String::new();
-        let mut dereference = false;
-        let mut filesystem = false;
+        // TODO: printf_format variable is not used in current implementation
+        let mut _printf_format = String::new();
+        // TODO: dereference variable is not used in current implementation
+        let mut _dereference = false;
+        // TODO: filesystem variable is not used in current implementation
+        let mut _filesystem = false;
         let mut zero_terminated = false;
         let mut terse = false;
 
@@ -38,18 +41,18 @@ impl CommandConverter for StatConverter {
                 }
                 "--printf" => {
                     if i + 1 < args.len() {
-                        printf_format = args[i + 1].clone();
+                        _printf_format = args[i + 1].clone();
                         i += 2;
                     } else {
                         i += 1;
                     }
                 }
                 "-L" | "--dereference" => {
-                    dereference = true;
+                    _dereference = true;
                     i += 1;
                 }
                 "-f" | "--file-system" => {
-                    filesystem = true;
+                    _filesystem = true;
                     i += 1;
                 }
                 "-t" | "--terse" => {

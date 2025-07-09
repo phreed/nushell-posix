@@ -220,7 +220,8 @@ impl TestBuiltinConverter {
 
         // Convert each part and combine with logical operators
         let mut result = String::new();
-        for (i, (part, op)) in parts.iter().enumerate() {
+        // TODO: op variable is not used in current implementation
+        for (i, (part, _op)) in parts.iter().enumerate() {
             if i > 0 {
                 result.push_str(" ");
                 result.push_str(&parts[i - 1].1);

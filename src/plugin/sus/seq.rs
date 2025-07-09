@@ -21,7 +21,8 @@ impl CommandConverter for SeqConverter {
         let mut start = 1;
         let mut end = 1;
         let mut separator = "\n".to_string();
-        let mut width = 0;
+        // TODO: width variable is not used in current implementation
+        let mut _width = 0;
         let mut equal_width = false;
         let mut format = String::new();
 
@@ -129,7 +130,8 @@ impl CommandConverter for SeqConverter {
             }
         } else if equal_width {
             // Equal width formatting
-            let max_width = if start.abs() > end.abs() {
+            // TODO: max_width variable is not used in current implementation
+            let _max_width = if start.abs() > end.abs() {
                 start.abs().to_string().len()
             } else {
                 end.abs().to_string().len()

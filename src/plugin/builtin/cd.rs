@@ -17,15 +17,16 @@ impl BuiltinConverter for CdBuiltinConverter {
         }
 
         let mut path = String::new();
-        let mut logical = true;
+        // TODO: logical variable is not used in current implementation
+        let mut _logical = true;
 
         for arg in args {
             match arg.as_str() {
                 "-L" => {
-                    logical = true;
+                    _logical = true;
                 }
                 "-P" => {
-                    logical = false;
+                    _logical = false;
                 }
                 "-" => {
                     return Ok("cd -".to_string());

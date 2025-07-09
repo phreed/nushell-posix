@@ -17,7 +17,8 @@ impl CommandConverter for MkdirConverter {
         }
 
         let mut parents = false;
-        let mut mode = String::new();
+        // TODO: mode variable is not used in current implementation
+        let mut _mode = String::new();
         let mut verbose = false;
         let mut directories = Vec::new();
 

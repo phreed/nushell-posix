@@ -19,12 +19,17 @@ impl CommandConverter for RealpathConverter {
         // Parse realpath arguments
         let mut paths = Vec::new();
         let mut zero_terminated = false;
-        let mut logical = false;
-        let mut physical = true;
-        let mut canonicalize_existing = false;
-        let mut canonicalize_missing = false;
+        // TODO: logical variable is not used in current implementation
+        let mut _logical = false;
+        // TODO: physical variable is not used in current implementation
+        let mut _physical = true;
+        // TODO: canonicalize_existing variable is not used in current implementation
+        let mut _canonicalize_existing = false;
+        // TODO: canonicalize_missing variable is not used in current implementation
+        let mut _canonicalize_missing = false;
         let mut relative_to = String::new();
-        let mut relative_base = String::new();
+        // TODO: relative_base variable is not used in current implementation
+        let mut _relative_base = String::new();
 
         let mut i = 0;
         while i < args.len() {
@@ -34,21 +39,21 @@ impl CommandConverter for RealpathConverter {
                     i += 1;
                 }
                 "-L" | "--logical" => {
-                    logical = true;
-                    physical = false;
+                    _logical = true;
+                    _physical = false;
                     i += 1;
                 }
                 "-P" | "--physical" => {
-                    physical = true;
-                    logical = false;
+                    _physical = true;
+                    _logical = false;
                     i += 1;
                 }
                 "-e" | "--canonicalize-existing" => {
-                    canonicalize_existing = true;
+                    _canonicalize_existing = true;
                     i += 1;
                 }
                 "-m" | "--canonicalize-missing" => {
-                    canonicalize_missing = true;
+                    _canonicalize_missing = true;
                     i += 1;
                 }
                 "--relative-to" => {
@@ -61,7 +66,7 @@ impl CommandConverter for RealpathConverter {
                 }
                 "--relative-base" => {
                     if i + 1 < args.len() {
-                        relative_base = args[i + 1].clone();
+                        _relative_base = args[i + 1].clone();
                         i += 2;
                     } else {
                         i += 1;

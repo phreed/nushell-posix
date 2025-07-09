@@ -17,7 +17,8 @@ impl CommandConverter for CpConverter {
         }
 
         let mut recursive = false;
-        let mut preserve = false;
+        // TODO: preserve variable is not used in current implementation
+        let mut _preserve = false;
         let mut force = false;
         let mut no_clobber = false;
         let mut update = false;
@@ -30,7 +31,7 @@ impl CommandConverter for CpConverter {
                     recursive = true;
                 }
                 "-p" | "--preserve" => {
-                    preserve = true;
+                    _preserve = true;
                 }
                 "-f" | "--force" => {
                     force = true;

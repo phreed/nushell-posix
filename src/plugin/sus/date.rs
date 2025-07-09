@@ -22,7 +22,8 @@ impl CommandConverter for DateConverter {
         let mut utc = false;
         let mut iso_8601 = false;
         let mut rfc_3339 = false;
-        let mut show_file_time = String::new();
+        // TODO: show_file_time variable is not used in current implementation
+        let mut _show_file_time = String::new();
         let mut reference_file = String::new();
 
         let mut i = 0;

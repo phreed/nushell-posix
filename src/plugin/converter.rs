@@ -51,7 +51,7 @@ impl PosixToNuConverter {
         }
     }
 
-    fn convert_simple_command(&self, cmd: &SimpleCommandData) -> Result<String> {
+    pub fn convert_simple_command(&self, cmd: &SimpleCommandData) -> Result<String> {
         let mut output = String::new();
 
         // Handle variable assignments

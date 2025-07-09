@@ -18,7 +18,8 @@ impl CommandConverter for HeadConverter {
 
         let mut line_count = 10;
         let mut files = Vec::new();
-        let mut quiet = false;
+        // TODO: quiet variable is not used in current implementation
+        let mut _quiet = false;
         let mut verbose = false;
 
         let mut i = 0;
@@ -33,7 +34,7 @@ impl CommandConverter for HeadConverter {
                     }
                 }
                 "-q" | "--quiet" | "--silent" => {
-                    quiet = true;
+                    _quiet = true;
                     i += 1;
                 }
                 "-v" | "--verbose" => {

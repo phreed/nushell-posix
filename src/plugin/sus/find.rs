@@ -23,7 +23,8 @@ impl CommandConverter for FindConverter {
         let mut exec_command = String::new();
         let mut print_action = true;
         let mut max_depth: Option<usize> = None;
-        let mut min_depth: Option<usize> = None;
+        // TODO: min_depth variable is not used in current implementation
+        let mut _min_depth: Option<usize> = None;
         let mut size_filter = String::new();
         let mut time_filter = String::new();
         let mut permission_filter = String::new();
@@ -81,7 +82,7 @@ impl CommandConverter for FindConverter {
                 }
                 "-mindepth" => {
                     if i + 1 < args.len() {
-                        min_depth = args[i + 1].parse().ok();
+                        _min_depth = args[i + 1].parse().ok();
                         i += 2;
                     } else {
                         i += 1;

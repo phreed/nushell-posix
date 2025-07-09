@@ -9,7 +9,8 @@ use anyhow::Result;
 pub struct FalseBuiltinConverter;
 
 impl BuiltinConverter for FalseBuiltinConverter {
-    fn convert(&self, args: &[String]) -> Result<String> {
+    fn convert(&self, _args: &[String]) -> Result<String> {
+        // TODO: args parameter is not used in current implementation
         // The false builtin ignores all arguments and always returns failure
         // In Nushell, `false` also ignores arguments
         Ok("false".to_string())

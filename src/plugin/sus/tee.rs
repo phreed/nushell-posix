@@ -19,7 +19,8 @@ impl CommandConverter for TeeConverter {
         // Parse tee arguments
         let mut files = Vec::new();
         let mut append = false;
-        let mut ignore_interrupts = false;
+        // TODO: ignore_interrupts variable is not used in current implementation
+        let mut _ignore_interrupts = false;
 
         let mut i = 0;
         while i < args.len() {
@@ -29,7 +30,7 @@ impl CommandConverter for TeeConverter {
                     i += 1;
                 }
                 "-i" | "--ignore-interrupts" => {
-                    ignore_interrupts = true;
+                    _ignore_interrupts = true;
                     i += 1;
                 }
                 "--help" => {

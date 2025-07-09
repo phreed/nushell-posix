@@ -10,7 +10,8 @@ pub struct JobsBuiltinConverter;
 
 impl BuiltinConverter for JobsBuiltinConverter {
     fn convert(&self, args: &[String]) -> Result<String> {
-        let base = BaseBuiltinConverter;
+        // TODO: base variable is not used in current implementation
+        let _base = BaseBuiltinConverter;
 
         if args.is_empty() {
             return Ok("jobs".to_string());

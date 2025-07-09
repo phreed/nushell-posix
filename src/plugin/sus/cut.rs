@@ -24,7 +24,8 @@ impl CommandConverter for CutConverter {
         let mut files = Vec::new();
         let mut output_delimiter = None;
         let mut only_delimited = false;
-        let mut complement = false;
+        // TODO: complement variable is not used in current implementation
+        let mut _complement = false;
 
         let mut i = 0;
         while i < args.len() {
@@ -74,7 +75,7 @@ impl CommandConverter for CutConverter {
                     i += 1;
                 }
                 "--complement" => {
-                    complement = true;
+                    _complement = true;
                     i += 1;
                 }
                 arg if !arg.starts_with('-') => {

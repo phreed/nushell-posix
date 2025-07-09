@@ -9,7 +9,8 @@ use anyhow::Result;
 pub struct TrueBuiltinConverter;
 
 impl BuiltinConverter for TrueBuiltinConverter {
-    fn convert(&self, args: &[String]) -> Result<String> {
+    fn convert(&self, _args: &[String]) -> Result<String> {
+        // TODO: args parameter is not used in current implementation
         // The true builtin ignores all arguments and always returns success
         // In Nushell, `true` also ignores arguments
         Ok("true".to_string())

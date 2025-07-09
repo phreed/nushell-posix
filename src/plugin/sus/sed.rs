@@ -21,9 +21,11 @@ impl CommandConverter for SedConverter {
         let mut files = Vec::new();
         let mut in_place = false;
         let mut quiet = false;
-        let mut extended_regex = false;
+        // TODO: extended_regex variable is not used in current implementation
+        let mut _extended_regex = false;
         let mut separate_files = false;
-        let mut line_length: Option<usize> = None;
+        // TODO: line_length variable is not used in current implementation
+        let mut _line_length: Option<usize> = None;
         let mut backup_suffix = String::new();
 
         let mut i = 0;
@@ -58,7 +60,7 @@ impl CommandConverter for SedConverter {
                     i += 1;
                 }
                 "-r" | "-E" | "--regexp-extended" => {
-                    extended_regex = true;
+                    _extended_regex = true;
                     i += 1;
                 }
                 "-s" | "--separate" => {
@@ -67,7 +69,7 @@ impl CommandConverter for SedConverter {
                 }
                 "-l" | "--line-length" => {
                     if i + 1 < args.len() {
-                        line_length = args[i + 1].parse().ok();
+                        _line_length = args[i + 1].parse().ok();
                         i += 2;
                     } else {
                         i += 1;
@@ -176,7 +178,8 @@ struct SedCommand {
 fn parse_sed_script(script: &str) -> Vec<SedCommand> {
     let mut commands = Vec::new();
     let mut current_command = String::new();
-    let mut in_address = false;
+    // TODO: in_address variable is not used in current implementation
+    let mut _in_address = false;
     let mut brace_depth = 0;
 
     for ch in script.chars() {
@@ -188,7 +191,7 @@ fn parse_sed_script(script: &str) -> Vec<SedCommand> {
                     }
                 }
                 current_command.clear();
-                in_address = false;
+                _in_address = false;
             }
             '{' => {
                 brace_depth += 1;

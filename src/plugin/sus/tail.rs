@@ -18,7 +18,8 @@ impl CommandConverter for TailConverter {
 
         let mut line_count = 10;
         let mut files = Vec::new();
-        let mut quiet = false;
+        // TODO: quiet variable is not used in current implementation
+        let mut _quiet = false;
         let mut verbose = false;
         let mut follow = false;
 
@@ -34,7 +35,7 @@ impl CommandConverter for TailConverter {
                     }
                 }
                 "-q" | "--quiet" | "--silent" => {
-                    quiet = true;
+                    _quiet = true;
                     i += 1;
                 }
                 "-v" | "--verbose" => {

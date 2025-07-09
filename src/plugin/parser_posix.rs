@@ -157,7 +157,8 @@ pub fn parse_posix_script(input: &str) -> Result<PosixScript> {
 }
 
 /// Attempt to parse using yash-syntax (advanced parser)
-fn parse_with_yash_syntax(input: &str) -> Result<PosixScript> {
+fn parse_with_yash_syntax(_input: &str) -> Result<PosixScript> {
+    // TODO: input parameter is not used in current implementation
     // For now, return an error to trigger fallback
     // This is where we would implement the yash-syntax integration
     // when the API is properly understood
